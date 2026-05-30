@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../config/theme.dart';
 import '../../services/streak_service.dart';
 import 'login_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -66,7 +67,11 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
           )
         ],
       ),

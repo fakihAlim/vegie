@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'config/constants.dart';
 import 'services/fcm_service.dart';
 import 'services/activity_log_service.dart';
+import 'services/local_notification_service.dart';
 import 'app.dart';
 
 Future<void> _initializeServerConfig() async {
@@ -36,6 +37,7 @@ void main() async {
   // Initialize services in the background so they do not block the UI boot
   FCMService.initialize();
   ActivityLogService.instance.initializeSession();
+  await LocalNotificationService.initialize();
   
   runApp(const LovingHarmonyApp());
 }
