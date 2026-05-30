@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../config/theme.dart';
 import '../models/news.dart';
 import '../screens/news/news_detail_screen.dart';
@@ -33,7 +34,7 @@ class NewsCard extends StatelessWidget {
               context,
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (_, __, ___) => NewsDetailScreen(newsId: news.id, title: news.title),
+                pageBuilder: (_, __, ___) => NewsDetailScreen(news: news),
                 transitionsBuilder: (_, animation, __, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
@@ -49,12 +50,18 @@ class NewsCard extends StatelessWidget {
                   Hero(
                     tag: 'news_image_${news.id}',
                     child: news.image != null
-                        ? Image.network(
-                            news.image!,
+                        ? CachedNetworkImage(
+                            imageUrl: news.image!,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                            placeholder: (context, url) => Container(
+                              height: 200,
+                              width: double.infinity,
+                              color: AppTheme.accentLight,
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
+                            errorWidget: (context, url, error) => _buildPlaceholder(),
                           )
                         : _buildPlaceholder(),
                   ),

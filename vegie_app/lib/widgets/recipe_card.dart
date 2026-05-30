@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../config/theme.dart';
 import '../models/recipe.dart';
 import '../screens/recipes/recipe_detail_screen.dart';
@@ -32,7 +33,7 @@ class RecipeCard extends StatelessWidget {
               context,
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (_, __, ___) => RecipeDetailScreen(recipeId: recipe.id, title: recipe.title),
+                pageBuilder: (_, __, ___) => RecipeDetailScreen(recipe: recipe),
                 transitionsBuilder: (_, animation, __, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
@@ -48,12 +49,18 @@ class RecipeCard extends StatelessWidget {
                   Hero(
                     tag: 'recipe_image_${recipe.id}',
                     child: recipe.photo != null
-                        ? Image.network(
-                            recipe.photo!,
+                        ? CachedNetworkImage(
+                            imageUrl: recipe.photo!,
                             height: 220,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                            placeholder: (context, url) => Container(
+                              height: 220,
+                              width: double.infinity,
+                              color: AppTheme.accentLight,
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
+                            errorWidget: (context, url, error) => _buildPlaceholder(),
                           )
                         : _buildPlaceholder(),
                   ),

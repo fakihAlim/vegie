@@ -350,6 +350,31 @@ class GroupController {
         jsonSuccess(null, 'Left the group successfully');
     }
 
+
+    // 1. Ambil semua jurnal makanan yang di-share oleh user lain
+public function getDiscoverFeed($userId) {
+    // Mengambil log makanan yang is_shared = 1 beserta total like dan status apakah user saat ini sudah me-like
+    $query = "SELECT fl.*, u.username, 
+              (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id) as likes_count,
+              (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id AND user_id = :userId) as is_liked
+              FROM food_logs fl
+              JOIN users u ON fl.user_id = u.id
+              WHERE fl.is_shared = 1
+              ORDER BY fl.created_at DESC";
+              
+    // Eksekusi query pdo dan return sebagai json response sukses...
+}
+
+// 2. Aksi Like / Unlike (Toggle)
+public function toggleLike($userId, $foodLogId) {
+    // Cek apakah sudah pernah di-like
+    $check = "SELECT id FROM food_log_likes WHERE user_id = :uid AND food_log_id = :fid";
+    // Jika sudah ada -> DELETE (Unlike)
+    // Jika belum ada -> INSERT (Like)
+    
+    // Return json response sukses...
+}
+
     /**
      * Generate a unique 6-character alphanumeric code
      */

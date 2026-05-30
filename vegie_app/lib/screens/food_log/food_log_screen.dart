@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
@@ -378,10 +379,14 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
     if (log.photoPath != null && File(log.photoPath!).existsSync()) {
       return Image.file(File(log.photoPath!), fit: BoxFit.cover);
     } else if (log.photoUrl != null) {
-      return Image.network(
-        log.photoUrl!,
+      return CachedNetworkImage(
+        imageUrl: log.photoUrl!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(Icons.restaurant, color: Colors.grey),
+        placeholder: (context, url) => Container(
+          color: Colors.grey[200],
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) => const Icon(Icons.restaurant, color: Colors.grey),
       );
     }
     return const Icon(Icons.restaurant, color: Colors.grey);

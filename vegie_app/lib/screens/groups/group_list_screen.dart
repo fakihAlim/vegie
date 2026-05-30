@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/group.dart';
 import '../../providers/group_provider.dart';
 import 'create_group_screen.dart';
 import 'join_group_screen.dart';
 import 'group_detail_screen.dart';
+import '../../widgets/discover_post_card.dart';
 
 class GroupListScreen extends StatefulWidget {
   const GroupListScreen({Key? key}) : super(key: key);
@@ -19,221 +21,94 @@ class _GroupListScreenState extends State<GroupListScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        Provider.of<GroupProvider>(context, listen: false).fetchGroups());
+    // Ambil data grup dan discover feed saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final groupProv = Provider.of<GroupProvider>(context, listen: false);
+      groupProv.fetchMyGroups();
+      groupProv.fetchDiscoverFeed();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Komunitas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.group_add_outlined),
-            tooltip: 'Gabung Grup',
-            onPressed: () => _navigateToJoin(context),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Text('Komunitas Vegetarian', style: TextStyle(fontWeight: FontWeight.bold)),
+          bottom: TabBar(
+            labelColor: AppTheme.primary,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppTheme.primary,
+            indicatorWeight: 3,
+            tabs: const [
+              Tab(text: 'Grup Saya'),
+              Tab(text: 'Discover'),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'groupListFab',
-        onPressed: () => _navigateToCreate(context),
-        backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Buat Grup', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-      ),
-      body: Consumer<GroupProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (provider.groups.isEmpty) {
-            return _buildEmptyState();
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchGroups(),
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-              itemCount: provider.groups.length,
-              itemBuilder: (context, index) {
-                return _buildGroupCard(context, provider.groups[index]);
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        ),
+        body: TabBarView(
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.accentLight.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.people_outline, size: 64, color: AppTheme.primary),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Belum Ada Grup',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Buat grup baru atau gabung ke grup yang sudah ada dengan kode undangan.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _navigateToJoin(context),
-                  icon: const Icon(Icons.login),
-                  label: const Text('Gabung'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _navigateToCreate(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Buat Grup'),
-                ),
-              ],
-            ),
+            _buildMyGroupsTab(),
+            _buildDiscoverTab(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildGroupCard(BuildContext context, Group group) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+  // TAB 1: GRUP SAYA (Pindahkan logika tampilan list grup lama Anda ke sini)
+  Widget _buildMyGroupsTab() {
+    return Consumer<GroupProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoadingGroups) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (provider.myGroups.isEmpty) {
+          return const Center(child: Text('Kamu belum bergabung dengan grup manapun.'));
+        }
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchMyGroups(),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: provider.myGroups.length,
+            itemBuilder: (context, index) {
+              final group = provider.myGroups[index];
+              // Return widget card grup lama Anda di sini
+              return ListTile(title: Text(group.name)); 
+            },
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => GroupDetailScreen(groupId: group.id, groupName: group.name),
-              ),
-            ).then((_) {
-              Provider.of<GroupProvider>(context, listen: false).fetchGroups();
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // Group Avatar
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentLight,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: group.photo != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.network(group.photo!, fit: BoxFit.cover),
-                        )
-                      : Center(
-                          child: Text(
-                            group.name.isNotEmpty ? group.name[0].toUpperCase() : 'G',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryDark,
-                            ),
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 16),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        group.name,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(Icons.people_outline, size: 14, color: AppTheme.textSecondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${group.memberCount} anggota',
-                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: group.role == 'admin'
-                                  ? Colors.amber.shade50
-                                  : AppTheme.accentLight,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              group.role == 'admin' ? 'Admin' : 'Member',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: group.role == 'admin'
-                                    ? Colors.amber.shade800
-                                    : AppTheme.primaryDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
-              ],
-            ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
+
+  // TAB 2: DISCOVER FEED
+  Widget _buildDiscoverTab() {
+    return Consumer<GroupProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoadingDiscover) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (provider.discoverPosts.isEmpty) {
+          return const Center(child: Text('Belum ada jurnal makanan yang dibagikan.'));
+        }
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchDiscoverFeed(),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: provider.discoverPosts.length,
+            itemBuilder: (context, index) {
+              final post = provider.discoverPosts[index];
+              return DiscoverPostCard(post: post);
+            },
+          ),
+        );
+      },
+    );
+  }
+}
 
   void _navigateToCreate(BuildContext context) {
     Navigator.push(

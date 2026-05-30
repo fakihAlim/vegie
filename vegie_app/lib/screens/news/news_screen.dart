@@ -25,7 +25,7 @@ class _NewsScreenState extends State<NewsScreen> {
     });
 
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 500) {
         Provider.of<NewsProvider>(context, listen: false).fetchNews();
       }
     });

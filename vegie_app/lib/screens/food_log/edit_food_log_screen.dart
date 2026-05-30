@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
 import '../../providers/food_log_provider.dart';
@@ -96,11 +97,23 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
         fit: BoxFit.cover,
       );
     } else if (widget.log.photoUrl != null) {
-      return Image.network(
-        widget.log.photoUrl!,
+      return CachedNetworkImage(
+        imageUrl: widget.log.photoUrl!,
         height: 250,
         width: double.infinity,
         fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          height: 250,
+          width: double.infinity,
+          color: Colors.grey.shade200,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) => Container(
+          height: 250,
+          width: double.infinity,
+          color: Colors.grey.shade200,
+          child: const Icon(Icons.broken_image_outlined, size: 50, color: Colors.grey),
+        ),
       );
     }
     return Container(

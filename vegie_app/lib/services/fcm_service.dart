@@ -4,6 +4,8 @@ import '../app.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/news/news_detail_screen.dart';
 import '../screens/recipes/recipe_detail_screen.dart';
+import '../models/news.dart';
+import '../models/recipe.dart';
 import 'auth_service.dart';
 
 class FCMService {
@@ -69,12 +71,24 @@ class FCMService {
     }
 
     if (type == 'news') {
+      // Create minimal News placeholder; detail screen will load full content from API
+      final placeholderNews = News(
+        id: id!,
+        title: message.notification?.title ?? 'Berita Baru',
+        publishedAt: DateTime.now(),
+      );
       navigatorState.push(MaterialPageRoute(
-        builder: (context) => NewsDetailScreen(newsId: id!, title: 'Berita Baru'),
+        builder: (context) => NewsDetailScreen(news: placeholderNews),
       ));
     } else if (type == 'recipe') {
+      // Create minimal Recipe placeholder; detail screen will load full content from API
+      final placeholderRecipe = Recipe(
+        id: id!,
+        title: message.notification?.title ?? 'Resep Baru',
+        publishedAt: DateTime.now(),
+      );
       navigatorState.push(MaterialPageRoute(
-        builder: (context) => RecipeDetailScreen(recipeId: id!, title: 'Resep Baru'),
+        builder: (context) => RecipeDetailScreen(recipe: placeholderRecipe),
       ));
     } else if (type == 'quiz') {
       navigatorState.pushAndRemoveUntil(

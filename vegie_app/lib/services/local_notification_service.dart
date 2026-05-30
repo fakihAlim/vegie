@@ -40,6 +40,11 @@ class LocalNotificationService {
     );
 
     await _notificationsPlugin.initialize(initializationSettings);
+
+    await _notificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.requestNotificationsPermission();
   }
 
   /// Schedules a daily repeating reminder at the specified time

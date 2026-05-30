@@ -1,59 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/recipe_provider.dart';
 import '../../config/theme.dart';
 import '../../models/recipe.dart';
 import '../../services/activity_log_service.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
-  final int recipeId;
-  final String title;
+  final Recipe recipe; // Kirim object utuh dari list
 
-  const RecipeDetailScreen({Key? key, required this.recipeId, required this.title}) : super(key: key);
+  const RecipeDetailScreen({Key? key, required this.recipe}) : super(key: key);
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
-  Recipe? _recipe;
-  bool _isLoading = true;
+  late Recipe _recipe;
+  bool _isLoadingExtra = false;
 
   @override
   void initState() {
     super.initState();
+    _recipe = widget.recipe; // Set data awal secara instan
     ActivityLogService.instance.logEvent('recipe_view', extraData: {
-      'recipe_id': widget.recipeId,
-      'title': widget.title,
+      'recipe_id': _recipe.id,
+      'title': _recipe.title,
     });
-    _loadDetail();
+    _loadExtraDetail();
   }
 
-  Future<void> _loadDetail() async {
-    final detail = await Provider.of<RecipeProvider>(context, listen: false).getRecipeDetail(widget.recipeId);
-    if (mounted) {
+  Future<void> _loadExtraDetail() async {
+    setState(() { _isLoadingExtra = true; });
+    final detail = await Provider.of<RecipeProvider>(context, listen: false).getRecipeDetail(_recipe.id);
+    if (mounted && detail != null) {
       setState(() {
-        _recipe = detail;
-        _isLoading = false;
+        _recipe = detail; // Update dengan data yang lebih lengkap (ingredients, steps)
+        _isLoadingExtra = false;
       });
+    } else if (mounted) {
+      setState(() { _isLoadingExtra = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_recipe == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Detail Resep')),
-        body: const Center(child: Text('Resep tidak ditemukan.')),
-      );
-    }
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
@@ -65,14 +56,22 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             backgroundColor: AppTheme.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
-                tag: 'recipe_image_${_recipe!.id}',
-                child: _recipe!.photo != null
+                tag: 'recipe_image_${_recipe.id}',
+                child: _recipe.photo != null
                     ? Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.network(
-                            _recipe!.photo!,
+                          CachedNetworkImage(
+                            imageUrl: _recipe.photo!,
                             fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: AppTheme.accentLight,
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppTheme.accentLight,
+                              child: Icon(Icons.restaurant, size: 80, color: AppTheme.primary.withOpacity(0.3)),
+                            ),
                           ),
                           const DecoratedBox(
                             decoration: BoxDecoration(
@@ -111,7 +110,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _recipe!.title,
+                      _recipe.title,
                       style: const TextStyle(
                         fontSize: 26, 
                         fontWeight: FontWeight.bold, 
@@ -139,21 +138,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          if (_recipe!.prepTimeMinutes != null)
-                            _buildInfoItem(Icons.timer_outlined, '${_recipe!.prepTimeMinutes} Mnt', 'Waktu', Colors.blue),
-                          if (_recipe!.prepTimeMinutes != null && _recipe!.calories != null)
+                          if (_recipe.prepTimeMinutes != null)
+                            _buildInfoItem(Icons.timer_outlined, '${_recipe.prepTimeMinutes} Mnt', 'Waktu', Colors.blue),
+                          if (_recipe.prepTimeMinutes != null && _recipe.calories != null)
                             Container(width: 1, height: 40, color: Colors.grey.shade200),
-                          if (_recipe!.calories != null)
-                            _buildInfoItem(Icons.local_fire_department_outlined, '${_recipe!.calories}', 'Kalori', Colors.orange),
+                          if (_recipe.calories != null)
+                            _buildInfoItem(Icons.local_fire_department_outlined, '${_recipe.calories}', 'Kalori', Colors.orange),
                         ],
                       ),
                     ),
                     const SizedBox(height: 32),
                     
                     // Deskripsi
-                    if (_recipe!.description != null && _recipe!.description!.isNotEmpty) ...[
+                    if (_recipe.description != null && _recipe.description!.isNotEmpty) ...[
                       Text(
-                        _recipe!.description!, 
+                        _recipe.description!, 
                         style: const TextStyle(
                           fontSize: 16, 
                           height: 1.6,
@@ -163,8 +162,26 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       const SizedBox(height: 32),
                     ],
 
+                    // Loading indicator for extra detail (ingredients & steps)
+                    if (_isLoadingExtra && (_recipe.ingredients == null) && (_recipe.steps == null))
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              CircularProgressIndicator(strokeWidth: 2),
+                              SizedBox(height: 12),
+                              Text(
+                                'Memuat bahan & langkah memasak...',
+                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     // Ingredients
-                    if (_recipe!.ingredients != null && _recipe!.ingredients!.isNotEmpty) ...[
+                    if (_recipe.ingredients != null && _recipe.ingredients!.isNotEmpty) ...[
                       const Text(
                         'Bahan-bahan', 
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)
@@ -177,7 +194,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
-                          children: _recipe!.ingredients!.map((ing) => Padding(
+                          children: _recipe.ingredients!.map((ing) => Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Row(
                               children: [
@@ -207,13 +224,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ],
 
                     // Steps
-                    if (_recipe!.steps != null && _recipe!.steps!.isNotEmpty) ...[
+                    if (_recipe.steps != null && _recipe.steps!.isNotEmpty) ...[
                       const Text(
                         'Langkah Memasak', 
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)
                       ),
                       const SizedBox(height: 24),
-                      ..._recipe!.steps!.map((step) => Padding(
+                      ..._recipe.steps!.map((step) => Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
