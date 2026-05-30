@@ -37,6 +37,10 @@
             <span class="menu-icon"><i class="bi bi-chat-quote"></i></span>
             Kata Mutiara
         </a>
+        <a href="<?= $baseUrl ?>pages/quizzes/index.php" class="menu-item <?= strpos($currentUri, 'quizzes') !== false ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-question-square-fill"></i></span>
+            Kuis Nutrisi
+        </a>
 
         <div class="menu-label">Management</div>
         <a href="<?= $baseUrl ?>pages/food-logs/index.php" class="menu-item <?= strpos($currentUri, 'food-logs') !== false ? 'active' : '' ?>">
