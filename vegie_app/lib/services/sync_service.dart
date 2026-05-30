@@ -130,9 +130,14 @@ class SyncService {
     try {
       final response = await _apiService.get('${Constants.endpointFoodLogs}?per_page=1000');
       if (response['success'] == true && response['data'] != null) {
-        // Data is paginated from API now, so it's inside response['data']['data']
-        // Fallback for when pagination is disabled
-        final List<dynamic> jsonList = response['data']['data'] ?? response['data'];
+        final List<dynamic> jsonList;
+        if (response['data'] is List) {
+          jsonList = response['data'];
+        } else if (response['data'] is Map && response['data']['data'] is List) {
+          jsonList = response['data']['data'];
+        } else {
+          jsonList = [];
+        }
         final logs = jsonList.map((json) => FoodLog.fromJson(json)).toList();
         
         await _localDb.replaceAllFoodLogs(logs);
