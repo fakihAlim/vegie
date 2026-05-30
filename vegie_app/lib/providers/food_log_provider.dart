@@ -157,6 +157,21 @@ class FoodLogProvider with ChangeNotifier {
     await fetchStreak();
   }
 
+  Future<bool> toggleShareLog(FoodLog log) async {
+    try {
+      final updatedLog = await _foodLogService.toggleShareFoodLog(log);
+      final index = _logs.indexWhere((l) => l.localId == log.localId);
+      if (index != -1) {
+        _logs[index] = updatedLog;
+        notifyListeners();
+      }
+      return true;
+    } catch (e) {
+      print("Error toggling share: $e");
+      return false;
+    }
+  }
+
   /// Rebuild _logDates from current _logs
   void _updateLogDates() {
     final Set<String> dates = {};

@@ -11,6 +11,7 @@ class FoodLog {
   final double? carbs;
   final double? fat;
   final double? protein;
+  final bool isShared; // Is shared to discover feed
   final bool isSynced;
   final DateTime createdAt;
 
@@ -27,6 +28,7 @@ class FoodLog {
     this.carbs,
     this.fat,
     this.protein,
+    this.isShared = false,
     this.isSynced = true,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -43,6 +45,7 @@ class FoodLog {
       carbs: json['carbs'] != null ? (json['carbs'] as num).toDouble() : null,
       fat: json['fat'] != null ? (json['fat'] as num).toDouble() : null,
       protein: json['protein'] != null ? (json['protein'] as num).toDouble() : null,
+      isShared: json['is_shared'] == true || json['is_shared'] == 1,
       isSynced: true,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
@@ -64,6 +67,7 @@ class FoodLog {
       carbs: map['carbs'] != null ? (map['carbs'] as num).toDouble() : null,
       fat: map['fat'] != null ? (map['fat'] as num).toDouble() : null,
       protein: map['protein'] != null ? (map['protein'] as num).toDouble() : null,
+      isShared: map['is_shared'] == 1,
       isSynced: map['is_synced'] == 1,
       createdAt: DateTime.parse(map['created_at']),
     );
@@ -83,6 +87,7 @@ class FoodLog {
       'carbs': carbs,
       'fat': fat,
       'protein': protein,
+      'is_shared': isShared ? 1 : 0,
       'is_synced': isSynced ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
     };
@@ -119,6 +124,7 @@ class FoodLog {
     double? carbs,
     double? fat,
     double? protein,
+    bool? isShared,
     bool? isSynced,
     DateTime? createdAt,
   }) {
@@ -135,6 +141,7 @@ class FoodLog {
       carbs: carbs ?? this.carbs,
       fat: fat ?? this.fat,
       protein: protein ?? this.protein,
+      isShared: isShared ?? this.isShared,
       isSynced: isSynced ?? this.isSynced,
       createdAt: createdAt ?? this.createdAt,
     );

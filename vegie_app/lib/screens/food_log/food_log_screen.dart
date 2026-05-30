@@ -303,11 +303,52 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            log.foodName,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  log.foodName,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryDark),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (log.hasNutrition && log.id != null)
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: Icon(
+                                    log.isShared ? Icons.share : Icons.share_outlined,
+                                    color: log.isShared ? AppTheme.primary : Colors.grey.shade400,
+                                    size: 20,
+                                  ),
+                                  tooltip: log.isShared ? 'Batal bagikan ke Discover' : 'Bagikan ke Discover',
+                                  onPressed: () async {
+                                    final provider = Provider.of<FoodLogProvider>(context, listen: false);
+                                    final success = await provider.toggleShareLog(log);
+                                    if (success) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(log.isShared 
+                                              ? 'Batal membagikan jurnal makanan.' 
+                                              : 'Berhasil membagikan jurnal makanan ke Discover!'),
+                                          behavior: SnackBarBehavior.floating,
+                                          backgroundColor: AppTheme.primary,
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Gagal mengubah status pembagian jurnal makanan.'),
+                                          behavior: SnackBarBehavior.floating,
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(

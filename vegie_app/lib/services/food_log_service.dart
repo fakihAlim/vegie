@@ -80,6 +80,24 @@ class FoodLogService {
     }
   }
 
+  Future<FoodLog> toggleShareFoodLog(FoodLog log) async {
+    if (log.id == null) {
+      throw Exception("Sinkronkan jurnal makanan terlebih dahulu sebelum membagikannya.");
+    }
+    
+    final ApiService apiService = ApiService();
+    final response = await apiService.post('${Constants.endpointFoodLogs}/${log.id}/share', {});
+    
+    if (response['success'] == true) {
+      final bool newShareStatus = response['data']['is_shared'] == true;
+      final updatedLog = log.copyWith(isShared: newShareStatus);
+      await _localDb.updateFoodLog(updatedLog);
+      return updatedLog;
+    } else {
+      throw Exception(response['message'] ?? "Gagal membagikan jurnal makanan.");
+    }
+  }
+
   Future<bool> _hasInternet() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     return !connectivityResult.contains(ConnectivityResult.none);

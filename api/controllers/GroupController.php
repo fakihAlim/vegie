@@ -351,29 +351,86 @@ class GroupController {
     }
 
 
-    // 1. Ambil semua jurnal makanan yang di-share oleh user lain
-public function getDiscoverFeed($userId) {
-    // Mengambil log makanan yang is_shared = 1 beserta total like dan status apakah user saat ini sudah me-like
-    $query = "SELECT fl.*, u.username, 
-              (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id) as likes_count,
-              (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id AND user_id = :userId) as is_liked
-              FROM food_logs fl
-              JOIN users u ON fl.user_id = u.id
-              WHERE fl.is_shared = 1
-              ORDER BY fl.created_at DESC";
-              
-    // Eksekusi query pdo dan return sebagai json response sukses...
-}
+    /**
+     * GET /api/groups/discover
+     * Get all shared food logs
+     */
+    public function discoverFeed() {
+        $auth = authenticate();
+        $userId = $auth['user_id'];
 
-// 2. Aksi Like / Unlike (Toggle)
-public function toggleLike($userId, $foodLogId) {
-    // Cek apakah sudah pernah di-like
-    $check = "SELECT id FROM food_log_likes WHERE user_id = :uid AND food_log_id = :fid";
-    // Jika sudah ada -> DELETE (Unlike)
-    // Jika belum ada -> INSERT (Like)
-    
-    // Return json response sukses...
-}
+        $stmt = $this->db->prepare(
+            "SELECT fl.*, u.name as username, 
+                    (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id) as likes_count,
+                    (SELECT COUNT(*) FROM food_log_likes WHERE food_log_id = fl.id AND user_id = ?) as is_liked
+             FROM food_logs fl
+             JOIN users u ON fl.user_id = u.id
+             WHERE fl.is_shared = 1
+             ORDER BY fl.created_at DESC"
+        );
+        $stmt->execute([$userId]);
+        $logs = $stmt->fetchAll();
+
+        $formatted = array_map(function ($log) {
+            return [
+                'id' => (int) $log['id'],
+                'user_id' => (int) $log['user_id'],
+                'photo' => $log['photo'] ? getUploadUrl($log['photo']) : null,
+                'food_name' => $log['food_name'],
+                'meal_time' => $log['meal_time'],
+                'category' => $log['category'],
+                'nutrition_notes' => $log['nutrition_notes'],
+                'calories' => $log['calories'] !== null ? (float) $log['calories'] : null,
+                'carbs' => $log['carbs'] !== null ? (float) $log['carbs'] : null,
+                'fat' => $log['fat'] !== null ? (float) $log['fat'] : null,
+                'protein' => $log['protein'] !== null ? (float) $log['protein'] : null,
+                'is_shared' => (int) $log['is_shared'],
+                'created_at' => $log['created_at'],
+                'username' => $log['username'],
+                'likes_count' => (int) $log['likes_count'],
+                'is_liked' => (bool) $log['is_liked']
+            ];
+        }, $logs);
+
+        jsonSuccess($formatted);
+    }
+
+    /**
+     * POST /api/groups/discover/like
+     * Toggle like/unlike on a shared food log
+     */
+    public function likeToggle() {
+        $auth = authenticate();
+        $userId = $auth['user_id'];
+
+        $data = getJsonBody();
+        validateRequired($data, ['food_log_id']);
+        $foodLogId = (int) $data['food_log_id'];
+
+        // Verify that the food log exists
+        $stmt = $this->db->prepare("SELECT id FROM food_logs WHERE id = ?");
+        $stmt->execute([$foodLogId]);
+        if (!$stmt->fetch()) {
+            jsonError('Food log not found', 404);
+        }
+
+        // Check if already liked
+        $stmt = $this->db->prepare("SELECT id FROM food_log_likes WHERE user_id = ? AND food_log_id = ?");
+        $stmt->execute([$userId, $foodLogId]);
+        $like = $stmt->fetch();
+
+        if ($like) {
+            // Delete like (unlike)
+            $stmt = $this->db->prepare("DELETE FROM food_log_likes WHERE user_id = ? AND food_log_id = ?");
+            $stmt->execute([$userId, $foodLogId]);
+            jsonSuccess(['is_liked' => false], 'Unliked successfully');
+        } else {
+            // Add like
+            $stmt = $this->db->prepare("INSERT INTO food_log_likes (user_id, food_log_id) VALUES (?, ?)");
+            $stmt->execute([$userId, $foodLogId]);
+            jsonSuccess(['is_liked' => true], 'Liked successfully');
+        }
+    }
 
     /**
      * Generate a unique 6-character alphanumeric code

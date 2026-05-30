@@ -72,7 +72,8 @@ class AuthController {
                 'join_date' => $joinDate,
                 'is_onboarding_completed' => false,
                 'ttm_stage' => $progress['stage'],
-                'is_feature_locked' => (bool)$progress['is_feature_locked']
+                'is_feature_locked' => (bool)$progress['is_feature_locked'],
+                'total_points' => 0
             ]
         ], 'Registration successful', 201);
     }
@@ -117,7 +118,8 @@ class AuthController {
                 'join_date' => $user['join_date'],
                 'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
                 'ttm_stage' => $progress['stage'],
-                'is_feature_locked' => (bool)$progress['is_feature_locked']
+                'is_feature_locked' => (bool)$progress['is_feature_locked'],
+                'total_points' => $this->getUserTotalPoints($user['id'])
             ]
         ], 'Login successful');
     }
@@ -161,6 +163,7 @@ class AuthController {
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],
             'is_feature_locked' => (bool)$progress['is_feature_locked'],
+            'total_points' => $this->getUserTotalPoints($user['id']),
             'stats' => [
                 'total_logs' => (int) $stats['total_logs'],
                 'total_groups' => (int) $groupStats['total_groups']
@@ -248,7 +251,8 @@ class AuthController {
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],
-            'is_feature_locked' => (bool)$progress['is_feature_locked']
+            'is_feature_locked' => (bool)$progress['is_feature_locked'],
+            'total_points' => $this->getUserTotalPoints($user['id'])
         ], 'Profile updated successfully');
     }
 
@@ -311,5 +315,17 @@ class AuthController {
         $stmt->execute([$stage, $userId]);
 
         jsonSuccess(null, 'Onboarding completed successfully');
+    }
+
+    private function getUserTotalPoints($userId) {
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(q.points), 0) as total_points
+             FROM user_quizzes uq
+             JOIN quizzes q ON uq.quiz_id = q.id
+             WHERE uq.user_id = ? AND uq.is_correct = 1"
+        );
+        $stmt->execute([$userId]);
+        $data = $stmt->fetch();
+        return (int) ($data['total_points'] ?? 0);
     }
 }

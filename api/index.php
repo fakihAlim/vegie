@@ -109,6 +109,8 @@ try {
                 $controller->streak();
             } elseif ($id && isset($segments[2]) && $segments[2] === 'analyze' && $method === 'POST') {
                 $controller->analyze($id);
+            } elseif ($id && isset($segments[2]) && $segments[2] === 'share' && $method === 'POST') {
+                $controller->share($id);
             } elseif ($id && $method === 'GET') {
                 $controller->show($id);
             } elseif ($id && ($method === 'PUT' || $method === 'POST') && isset($segments[2]) && $segments[2] === 'update') {
@@ -161,7 +163,15 @@ try {
             $controller = new GroupController();
             $action = $segments[1] ?? null;
 
-            if ($action === 'join' && $method === 'POST') {
+            if ($action === 'discover') {
+                if ($method === 'GET') {
+                    $controller->discoverFeed();
+                } elseif ($method === 'POST' && isset($segments[2]) && $segments[2] === 'like') {
+                    $controller->likeToggle();
+                } else {
+                    jsonError('Discover endpoint not found', 404);
+                }
+            } elseif ($action === 'join' && $method === 'POST') {
                 $controller->join();
             } elseif ($action && isset($segments[2])) {
                 $subAction = $segments[2];

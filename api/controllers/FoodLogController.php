@@ -448,6 +448,34 @@ class FoodLogController {
     }
 
     /**
+     * POST /api/food-logs/{id}/share
+     */
+    public function share($id) {
+        $auth = authenticate();
+        $userId = $auth['user_id'];
+
+        // Check ownership
+        $stmt = $this->db->prepare("SELECT * FROM food_logs WHERE id = ? AND user_id = ?");
+        $stmt->execute([$id, $userId]);
+        $log = $stmt->fetch();
+
+        if (!$log) {
+            jsonError('Food log not found', 404);
+        }
+
+        // Toggle share status
+        $newShareStatus = $log['is_shared'] ? 0 : 1;
+
+        $stmt = $this->db->prepare("UPDATE food_logs SET is_shared = ? WHERE id = ?");
+        $stmt->execute([$newShareStatus, $id]);
+
+        jsonSuccess([
+            'id' => (int) $id,
+            'is_shared' => (bool) $newShareStatus
+        ], $newShareStatus ? 'Food log shared to Discover successfully' : 'Food log removed from Discover');
+    }
+
+    /**
      * Format a food log record for API response
      */
     private function formatLog($log) {
@@ -462,6 +490,7 @@ class FoodLogController {
             'carbs' => $log['carbs'] !== null ? (float) $log['carbs'] : null,
             'fat' => $log['fat'] !== null ? (float) $log['fat'] : null,
             'protein' => $log['protein'] !== null ? (float) $log['protein'] : null,
+            'is_shared' => isset($log['is_shared']) ? (bool) $log['is_shared'] : false,
             'created_at' => $log['created_at'],
         ];
     }

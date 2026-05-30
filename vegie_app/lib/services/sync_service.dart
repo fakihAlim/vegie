@@ -119,6 +119,7 @@ class SyncService {
       carbs: data['carbs'] != null ? (data['carbs'] as num).toDouble() : log.carbs,
       fat: data['fat'] != null ? (data['fat'] as num).toDouble() : log.fat,
       protein: data['protein'] != null ? (data['protein'] as num).toDouble() : log.protein,
+      isShared: data['is_shared'] == true || data['is_shared'] == 1 || log.isShared,
       isSynced: true,
       createdAt: log.createdAt,
     );
