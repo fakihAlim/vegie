@@ -96,6 +96,11 @@ class AuthService {
     await prefs.remove(Constants.keyUser);
   }
 
+  Future<void> saveUser(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(Constants.keyUser, jsonEncode(user.toJson()));
+  }
+
   Future<bool> registerFcmToken(String token) async {
     final response = await _apiService.post(
       Constants.endpointFcmToken,

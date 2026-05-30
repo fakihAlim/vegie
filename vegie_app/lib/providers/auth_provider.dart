@@ -124,4 +124,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     return success;
   }
+
+  void updateTtmState(String stage, bool isLocked) {
+    if (_user != null) {
+      _user = _user!.copyWith(ttmStage: stage, isFeatureLocked: isLocked);
+      _authService.saveUser(_user!);
+      notifyListeners();
+    }
+  }
 }

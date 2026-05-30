@@ -7,6 +7,8 @@ class User {
   final String joinDate;
   final Map<String, int>? stats;
   final bool isOnboardingCompleted;
+  final String ttmStage;
+  final bool isFeatureLocked;
 
   User({
     required this.id,
@@ -17,6 +19,8 @@ class User {
     required this.joinDate,
     this.stats,
     this.isOnboardingCompleted = false,
+    this.ttmStage = 'precontemplation',
+    this.isFeatureLocked = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,8 @@ class User {
           ? Map<String, int>.from(json['stats']) 
           : null,
       isOnboardingCompleted: json['is_onboarding_completed'] == true || json['is_onboarding_completed'] == 1,
+      ttmStage: json['ttm_stage'] ?? 'precontemplation',
+      isFeatureLocked: json['is_feature_locked'] == true || json['is_feature_locked'] == 1,
     );
   }
 
@@ -44,6 +50,34 @@ class User {
       'join_date': joinDate,
       'stats': stats,
       'is_onboarding_completed': isOnboardingCompleted,
+      'ttm_stage': ttmStage,
+      'is_feature_locked': isFeatureLocked,
     };
+  }
+
+  User copyWith({
+    int? id,
+    String? name,
+    String? email,
+    String? photo,
+    String? bio,
+    String? joinDate,
+    Map<String, int>? stats,
+    bool? isOnboardingCompleted,
+    String? ttmStage,
+    bool? isFeatureLocked,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      photo: photo ?? this.photo,
+      bio: bio ?? this.bio,
+      joinDate: joinDate ?? this.joinDate,
+      stats: stats ?? this.stats,
+      isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
+      ttmStage: ttmStage ?? this.ttmStage,
+      isFeatureLocked: isFeatureLocked ?? this.isFeatureLocked,
+    );
   }
 }
