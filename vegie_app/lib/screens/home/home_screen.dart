@@ -692,7 +692,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Api streak Anda sedang dibekukan! Catat 1 buah pisang atau apel hari ini menggunakan kamera AI untuk mencairkan streak-mu!',
-                  style: TextStyle(color: Colors.white80, fontSize: 13, height: 1.4),
+                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 Center(
@@ -928,7 +928,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Anda telah menjaga kebiasaan makan sehat ini lebih dari 6 bulan!',
-                      style: TextStyle(color: Colors.white80, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
