@@ -111,10 +111,17 @@ class QuizController {
 
     /**
      * POST /api/quizzes/{id}/answer
-     * User submits their answer for a quiz
-     * Body: { "answer": "a"|"b"|"c"|"d" }
+     * User submits their answer for a quiz (Legacy route)
      */
     public function answer(int|string $id) {
+        $this->submitAnswer($id);
+    }
+
+    /**
+     * POST /api/quizzes/{id}/submit
+     * User submits their answer for a quiz, checks correctness, logs answer, and adds gamification points
+     */
+    public function submitAnswer(int|string $id) {
         $auth = authenticate();
         $userId = $auth['user_id'];
 
@@ -153,6 +160,13 @@ class QuizController {
             "INSERT INTO user_quizzes (user_id, quiz_id, is_correct) VALUES (?, ?, ?)"
         );
         $insertStmt->execute([$userId, (int) $id, $isCorrect]);
+
+        // Add points via GamificationManager
+        if ($pointsEarned > 0) {
+            require_once __DIR__ . '/../helpers/gamification_manager.php';
+            $gamification = new GamificationManager();
+            $gamification->addPoints($userId, $pointsEarned, 'quiz_answer');
+        }
 
         jsonSuccess([
             'quiz_id'        => (int) $id,
@@ -254,5 +268,91 @@ class QuizController {
                 : 0,
             'total_points'    => (int) $pointsData['total_points'],
         ]);
+    }
+
+    /**
+     * POST /api/quizzes/daily-generate
+     * Generate a new daily quiz using AI (Ollama with Gemini fallback) and send push notification
+     */
+    public function generateDailyAIQuiz() {
+        // Authenticate admin/cron
+        $auth = authenticate();
+
+        // Load AI Quiz Generator
+        require_once __DIR__ . '/../helpers/ai_quiz_generator.php';
+
+        $quizData = generatePlantBasedQuiz();
+
+        if ($quizData === null) {
+            jsonError('Gagal membuat kuis dari AI. Silakan coba lagi nanti.', 503);
+        }
+
+        // Insert into database
+        $stmt = $this->db->prepare(
+            "INSERT INTO quizzes (question, option_a, option_b, option_c, option_d, correct_answer, explanation, points, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 50, 1)"
+        );
+        $stmt->execute([
+            $quizData['question'],
+            $quizData['option_a'],
+            $quizData['option_b'],
+            $quizData['option_c'],
+            $quizData['option_d'],
+            $quizData['correct_answer'],
+            $quizData['explanation'],
+        ]);
+
+        $quizId = (int) $this->db->lastInsertId();
+
+        // Trigger push notification for new quiz
+        require_once __DIR__ . '/../helpers/push_notification.php';
+        sendPushNotification('Kuis Baru!', 'Uji pengetahuanmu tentang nutrisi hari ini.', 'quiz', $quizId);
+
+        jsonSuccess([
+            'id'          => $quizId,
+            'question'    => $quizData['question'],
+            'option_a'    => $quizData['option_a'],
+            'option_b'    => $quizData['option_b'],
+            'option_c'    => $quizData['option_c'],
+            'option_d'    => $quizData['option_d'],
+            'points'      => 50,
+            'ai_provider' => $quizData['ai_provider'] ?? 'unknown',
+            'created_at'  => date('Y-m-d H:i:s'),
+        ], 'Kuis baru berhasil dibuat oleh AI dan notifikasi telah dikirim! 🤖', 201);
+    }
+
+    /**
+     * GET /api/quizzes/daily
+     * Get one active daily quiz that has NOT been answered by the requesting user
+     */
+    public function getDailyQuiz() {
+        $auth = authenticate();
+        $userId = $auth['user_id'];
+
+        $stmt = $this->db->prepare(
+            "SELECT q.* 
+             FROM quizzes q
+             LEFT JOIN user_quizzes uq ON uq.quiz_id = q.id AND uq.user_id = ?
+             WHERE q.is_active = 1 AND uq.id IS NULL
+             ORDER BY q.created_at DESC
+             LIMIT 1"
+        );
+        $stmt->execute([$userId]);
+        $quiz = $stmt->fetch();
+
+        if (!$quiz) {
+            jsonError('Tidak ada kuis baru untuk hari ini. Kamu sudah menjawab semua kuis! 🎉', 404);
+        }
+
+        jsonSuccess([
+            'id'          => (int) $quiz['id'],
+            'question'    => $quiz['question'],
+            'option_a'    => $quiz['option_a'],
+            'option_b'    => $quiz['option_b'],
+            'option_c'    => $quiz['option_c'],
+            'option_d'    => $quiz['option_d'],
+            'points'      => (int) $quiz['points'],
+            'created_at'  => $quiz['created_at']
+        ], 'Kuis harian berhasil diambil');
     }
 }

@@ -23,6 +23,8 @@ require_once __DIR__ . '/helpers/jwt.php';
 require_once __DIR__ . '/helpers/upload.php';
 require_once __DIR__ . '/helpers/ttm_evaluator.php';
 require_once __DIR__ . '/helpers/ai_quiz_generator.php';
+require_once __DIR__ . '/helpers/push_notification.php';
+require_once __DIR__ . '/helpers/gamification_manager.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/middleware/auth.php';
 
@@ -131,6 +133,8 @@ try {
                 $controller->show($id);
             } elseif (!$id && $method === 'GET') {
                 $controller->index();
+            } elseif (!$id && $method === 'POST') {
+                $controller->create();
             } else {
                 jsonError('News endpoint not found', 404);
             }
@@ -145,6 +149,8 @@ try {
                 $controller->show($id);
             } elseif (!$id && $method === 'GET') {
                 $controller->index();
+            } elseif (!$id && $method === 'POST') {
+                $controller->create();
             } else {
                 jsonError('Recipe endpoint not found', 404);
             }
@@ -186,12 +192,16 @@ try {
             $controller = new QuizController();
             $id = $segments[1] ?? null;
 
-            if ($id === 'generate' && $method === 'POST') {
+            if ($id === 'daily-generate' && $method === 'POST') {
+                $controller->generateDailyAIQuiz();
+            } elseif ($id === 'generate' && $method === 'POST') {
                 $controller->generate();
+            } elseif ($id === 'daily' && $method === 'GET') {
+                $controller->getDailyQuiz();
             } elseif ($id === 'stats' && $method === 'GET') {
                 $controller->stats();
-            } elseif ($id && isset($segments[2]) && $segments[2] === 'answer' && $method === 'POST') {
-                $controller->answer($id);
+            } elseif ($id && isset($segments[2]) && ($segments[2] === 'submit' || $segments[2] === 'answer') && $method === 'POST') {
+                $controller->submitAnswer($id);
             } elseif ($id && $method === 'GET') {
                 $controller->show($id);
             } elseif (!$id && $method === 'GET') {

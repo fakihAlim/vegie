@@ -82,4 +82,43 @@ class NewsController {
             'created_at' => $news['created_at']
         ]);
     }
+
+    /**
+     * POST /api/news
+     * Create a new news article (Admin) and trigger push notification
+     */
+    public function create() {
+        $auth = authenticate();
+
+        $data = getJsonBody();
+        validateRequired($data, ['title', 'content']);
+
+        $title = trim($data['title']);
+        $content = trim($data['content']);
+        $image = $data['image'] ?? null;
+        $isPublished = isset($data['is_published']) ? (int) $data['is_published'] : 1;
+        $publishedAt = $data['published_at'] ?? date('Y-m-d H:i:s');
+
+        $stmt = $this->db->prepare(
+            "INSERT INTO news (title, content, image, is_published, published_at) 
+             VALUES (?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([$title, $content, $image, $isPublished, $publishedAt]);
+        $newsId = (int) $this->db->lastInsertId();
+
+        // Trigger push notification if published
+        if ($isPublished) {
+            require_once __DIR__ . '/../helpers/push_notification.php';
+            sendPushNotification('Berita Baru', $title, 'news', $newsId);
+        }
+
+        jsonSuccess([
+            'id' => $newsId,
+            'title' => $title,
+            'content' => $content,
+            'image' => $image ? getUploadUrl($image) : null,
+            'is_published' => (bool) $isPublished,
+            'published_at' => $publishedAt
+        ], 'Berita berhasil dibuat!', 201);
+    }
 }
