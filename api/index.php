@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/helpers/response.php';
 require_once __DIR__ . '/helpers/jwt.php';
 require_once __DIR__ . '/helpers/upload.php';
+require_once __DIR__ . '/helpers/ttm_evaluator.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/middleware/auth.php';
 

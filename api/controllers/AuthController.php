@@ -58,6 +58,9 @@ class AuthController {
             'name' => $name
         ]);
 
+        $evaluator = new TtmEvaluator($this->db);
+        $progress = $evaluator->evaluateProgress($userId);
+
         jsonSuccess([
             'token' => $token,
             'user' => [
@@ -67,7 +70,9 @@ class AuthController {
                 'photo' => null,
                 'bio' => null,
                 'join_date' => $joinDate,
-                'is_onboarding_completed' => false
+                'is_onboarding_completed' => false,
+                'ttm_stage' => $progress['stage'],
+                'is_feature_locked' => (bool)$progress['is_feature_locked']
             ]
         ], 'Registration successful', 201);
     }
@@ -98,6 +103,9 @@ class AuthController {
             'name' => $user['name']
         ]);
 
+        $evaluator = new TtmEvaluator($this->db);
+        $progress = $evaluator->evaluateProgress($user['id']);
+
         jsonSuccess([
             'token' => $token,
             'user' => [
@@ -107,7 +115,9 @@ class AuthController {
                 'photo' => $user['photo'] ? getUploadUrl($user['photo']) : null,
                 'bio' => $user['bio'],
                 'join_date' => $user['join_date'],
-                'is_onboarding_completed' => (bool)$user['is_onboarding_completed']
+                'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
+                'ttm_stage' => $progress['stage'],
+                'is_feature_locked' => (bool)$progress['is_feature_locked']
             ]
         ], 'Login successful');
     }
@@ -138,6 +148,9 @@ class AuthController {
         $stmt->execute([$userId]);
         $groupStats = $stmt->fetch();
 
+        $evaluator = new TtmEvaluator($this->db);
+        $progress = $evaluator->evaluateProgress($userId);
+
         jsonSuccess([
             'id' => (int) $user['id'],
             'name' => $user['name'],
@@ -146,6 +159,8 @@ class AuthController {
             'bio' => $user['bio'],
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
+            'ttm_stage' => $progress['stage'],
+            'is_feature_locked' => (bool)$progress['is_feature_locked'],
             'stats' => [
                 'total_logs' => (int) $stats['total_logs'],
                 'total_groups' => (int) $groupStats['total_groups']
@@ -221,6 +236,9 @@ class AuthController {
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
+        $evaluator = new TtmEvaluator($this->db);
+        $progress = $evaluator->evaluateProgress($userId);
+
         jsonSuccess([
             'id' => (int) $user['id'],
             'name' => $user['name'],
@@ -228,7 +246,9 @@ class AuthController {
             'photo' => $user['photo'] ? getUploadUrl($user['photo']) : null,
             'bio' => $user['bio'],
             'join_date' => $user['join_date'],
-            'is_onboarding_completed' => (bool)$user['is_onboarding_completed']
+            'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
+            'ttm_stage' => $progress['stage'],
+            'is_feature_locked' => (bool)$progress['is_feature_locked']
         ], 'Profile updated successfully');
     }
 

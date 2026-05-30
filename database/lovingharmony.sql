@@ -35,6 +35,10 @@ CREATE TABLE users (
     photo VARCHAR(255) DEFAULT NULL,
     bio TEXT DEFAULT NULL,
     join_date DATE NOT NULL,
+    is_onboarding_completed TINYINT(1) DEFAULT 0,
+    current_stage VARCHAR(50) DEFAULT NULL,
+    ttm_stage ENUM('precontemplation', 'contemplation', 'preparation', 'action', 'maintenance') DEFAULT 'precontemplation',
+    ttm_action_start_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

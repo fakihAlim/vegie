@@ -153,6 +153,9 @@ class FoodLogController {
         ]);
         $logId = $this->db->lastInsertId();
 
+        $evaluator = new TtmEvaluator($this->db);
+        $progress = $evaluator->evaluateProgress($userId);
+
         jsonSuccess([
             'id' => (int) $logId,
             'photo' => $photoPath ? getUploadUrl($photoPath) : null,
@@ -167,6 +170,8 @@ class FoodLogController {
             'ai_provider' => $aiResult['ai_provider'] ?? null,
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
             'ai_response_time' => $aiResult['ai_response_time'] ?? null,
+            'current_ttm_stage' => $progress['stage'],
+            'is_feature_locked' => (bool)$progress['is_feature_locked']
         ], 'Food log created successfully', 201);
     }
 
