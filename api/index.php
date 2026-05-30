@@ -22,6 +22,7 @@ require_once __DIR__ . '/helpers/response.php';
 require_once __DIR__ . '/helpers/jwt.php';
 require_once __DIR__ . '/helpers/upload.php';
 require_once __DIR__ . '/helpers/ttm_evaluator.php';
+require_once __DIR__ . '/helpers/ai_quiz_generator.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/middleware/auth.php';
 
@@ -180,11 +181,34 @@ try {
             }
             break;
 
+        case 'quizzes':
+            require_once __DIR__ . '/controllers/QuizController.php';
+            $controller = new QuizController();
+            $id = $segments[1] ?? null;
+
+            if ($id === 'generate' && $method === 'POST') {
+                $controller->generate();
+            } elseif ($id === 'stats' && $method === 'GET') {
+                $controller->stats();
+            } elseif ($id && isset($segments[2]) && $segments[2] === 'answer' && $method === 'POST') {
+                $controller->answer($id);
+            } elseif ($id && $method === 'GET') {
+                $controller->show($id);
+            } elseif (!$id && $method === 'GET') {
+                $controller->index();
+            } else {
+                jsonError('Quiz endpoint not found', 404);
+            }
+            break;
+
         case 'notifications':
             require_once __DIR__ . '/controllers/NotificationController.php';
             $controller = new NotificationController();
-            
-            if ($method === 'GET') {
+            $action = $segments[1] ?? null;
+
+            if ($action === 'send' && $method === 'POST') {
+                $controller->send();
+            } elseif (!$action && $method === 'GET') {
                 $controller->index();
             } else {
                 jsonError('Notification endpoint not found', 404);

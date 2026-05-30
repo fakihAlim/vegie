@@ -178,9 +178,39 @@ CREATE TABLE notifications (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
-    type ENUM('news','recipe','group','system') NOT NULL,
+    type ENUM('news','recipe','group','system','quiz') NOT NULL,
     reference_id INT DEFAULT NULL,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ============================================
+-- Quizzes Table
+-- ============================================
+CREATE TABLE quizzes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    question TEXT NOT NULL,
+    option_a VARCHAR(255) NOT NULL,
+    option_b VARCHAR(255) NOT NULL,
+    option_c VARCHAR(255) NOT NULL,
+    option_d VARCHAR(255) NOT NULL,
+    correct_answer ENUM('a','b','c','d') NOT NULL,
+    explanation TEXT DEFAULT NULL,
+    points INT DEFAULT 50,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ============================================
+-- User Quizzes (Answer Log) Table
+-- ============================================
+CREATE TABLE user_quizzes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    quiz_id INT NOT NULL,
+    is_correct TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ============================================
