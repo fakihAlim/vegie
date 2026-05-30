@@ -10,6 +10,7 @@ class User {
   final String ttmStage;
   final bool isFeatureLocked;
   int totalPoints; // Non-final to allow incrementing locally
+  final List<String> unlockedBadges; // Badges unlocked by user
 
   User({
     required this.id,
@@ -23,6 +24,7 @@ class User {
     this.ttmStage = 'precontemplation',
     this.isFeatureLocked = false,
     this.totalPoints = 0,
+    this.unlockedBadges = const [],
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,9 @@ class User {
       ttmStage: json['ttm_stage'] ?? 'precontemplation',
       isFeatureLocked: json['is_feature_locked'] == true || json['is_feature_locked'] == 1,
       totalPoints: json['total_points'] ?? json['points'] ?? 0,
+      unlockedBadges: json['unlocked_badges'] != null 
+          ? List<String>.from(json['unlocked_badges']) 
+          : const [],
     );
   }
 
@@ -56,6 +61,7 @@ class User {
       'ttm_stage': ttmStage,
       'is_feature_locked': isFeatureLocked,
       'total_points': totalPoints,
+      'unlocked_badges': unlockedBadges,
     };
   }
 
@@ -71,6 +77,7 @@ class User {
     String? ttmStage,
     bool? isFeatureLocked,
     int? totalPoints,
+    List<String>? unlockedBadges,
   }) {
     return User(
       id: id ?? this.id,
@@ -84,6 +91,7 @@ class User {
       ttmStage: ttmStage ?? this.ttmStage,
       isFeatureLocked: isFeatureLocked ?? this.isFeatureLocked,
       totalPoints: totalPoints ?? this.totalPoints,
+      unlockedBadges: unlockedBadges ?? this.unlockedBadges,
     );
   }
 }
