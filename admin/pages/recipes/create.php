@@ -66,6 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $db->commit();
+
+            // Send Push Notification if published
+            if ($isPublished && $recipeId) {
+                require_once __DIR__ . '/../../../api/helpers/push_notification.php';
+                sendPushNotification('Resep Baru', $title, 'recipe', $recipeId);
+            }
+
             $_SESSION['flash_success'] = 'Resep berhasil ditambahkan';
             header('Location: index.php');
             exit;

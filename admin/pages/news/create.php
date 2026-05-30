@@ -31,6 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             "INSERT INTO news (title, content, image, is_published, published_at) VALUES (?, ?, ?, ?, ?)"
         );
         $stmt->execute([$title, $content, $imagePath, $isPublished, $publishedAt]);
+        $newsId = $db->lastInsertId();
+
+        // Send Push Notification if published
+        if ($isPublished && $newsId) {
+            require_once __DIR__ . '/../../../api/helpers/push_notification.php';
+            sendPushNotification('Berita Baru', $title, 'news', $newsId);
+        }
 
         $_SESSION['flash_success'] = 'Berita berhasil ditambahkan';
         header('Location: index.php');
