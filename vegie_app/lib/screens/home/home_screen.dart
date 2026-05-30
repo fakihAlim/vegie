@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Pastikan di file models/user.dart sudah ada penanganan nilai default untuk ttmStage dan isFeatureLocked
     // final String currentStage = user?.ttmStage ?? 'precontemplation';
     // Anggap isLocked dibaca dari API (ubah ke user?.isFeatureLocked jika model sudah siap)
-    final bool isLocked = false; // Ganti ini menjadi: final bool isLocked = user?.isFeatureLocked ?? false;
+    final bool isLocked = user?.isFeatureLocked ?? false;
 
     // 3. Susun ulang _screens dengan menyisipkan logika adaptif
     final List<Widget> screens = [
