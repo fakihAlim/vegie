@@ -12,19 +12,21 @@ import '../groups/group_list_screen.dart';
 import '../auth/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final int initialIndex;
+  const HomeScreen({Key? key, this.initialIndex = 0}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
   @override
   void initState() {
     super.initState();
-    _logTabChange(0);
+    _currentIndex = widget.initialIndex;
+    _logTabChange(_currentIndex);
   }
 
   void _logTabChange(int index) {

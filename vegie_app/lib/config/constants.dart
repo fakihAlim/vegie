@@ -18,6 +18,8 @@ class Constants {
   static const String endpointNotifications = '/notifications';
   static const String endpointQuoteToday = '/quotes/today';
   static const String endpointActivityLogs = '/activity-logs';
+  static const String endpointDailyQuiz = '/quizzes/daily';
+  static const String endpointQuizzes = '/quizzes';
 
   // Shared Preferences Keys
   static const String keyToken = 'auth_token';

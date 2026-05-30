@@ -132,4 +132,12 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void addLocalPoints(int points) {
+    if (_user != null) {
+      _user!.totalPoints += points;
+      _authService.saveUser(_user!);
+      notifyListeners();
+    }
+  }
 }

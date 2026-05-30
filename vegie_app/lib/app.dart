@@ -12,6 +12,8 @@ import 'screens/splash_screen.dart';
 class LovingHarmonyApp extends StatefulWidget {
   const LovingHarmonyApp({Key? key}) : super(key: key);
 
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   State<LovingHarmonyApp> createState() => _LovingHarmonyAppState();
 }
@@ -50,6 +52,7 @@ class _LovingHarmonyAppState extends State<LovingHarmonyApp> with WidgetsBinding
       ],
       child: MaterialApp(
         title: 'LovingHarmony',
+        navigatorKey: LovingHarmonyApp.navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const SplashScreen(),
