@@ -47,6 +47,10 @@
             <span class="menu-icon"><i class="bi bi-clipboard2-data-fill"></i></span>
             Food Logs
         </a>
+        <a href="<?= $baseUrl ?>pages/badges/index.php" class="menu-item <?= strpos($currentUri, 'badges') !== false ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-award-fill"></i></span>
+            Kelola Lencana
+        </a>
         <a href="<?= $baseUrl ?>pages/users/index.php" class="menu-item <?= strpos($currentUri, 'users') !== false ? 'active' : '' ?>">
             <span class="menu-icon"><i class="bi bi-people-fill"></i></span>
             Users

@@ -174,6 +174,10 @@ class FoodLogController {
         $userStmt->execute([$userId]);
         $totalCarbonSaved = (float)($userStmt->fetch()['total_carbon_saved'] ?? 0.00);
 
+        // Check & award badges based on behavioral milestones
+        $gamification = new GamificationManager();
+        $newlyUnlockedBadges = $gamification->checkAndAwardBadges($userId);
+
         jsonSuccess([
             'id' => (int) $logId,
             'photo' => $photoPath ? getUploadUrl($photoPath) : null,
@@ -193,8 +197,10 @@ class FoodLogController {
             'current_ttm_stage' => $progress['stage'],
             'is_feature_locked' => (bool)$progress['is_feature_locked'],
             'carbon_saved_this_meal' => $carbonSavedThisMeal,
-            'total_carbon_saved' => $totalCarbonSaved
+            'total_carbon_saved' => $totalCarbonSaved,
+            'newly_unlocked_badges' => $newlyUnlockedBadges,
         ], 'Food log created successfully', 201);
+
     }
 
     /**

@@ -37,17 +37,35 @@ class FoodLogService {
 
     // If online, try to sync immediately
     if (hasConnection) {
-      final success = await _syncService.syncUnsyncedFoodLogs();
-      if (success) {
-        // Fetch the updated log from DB to get the AI analysis results
-        final allLogs = await _localDb.getFoodLogs();
-        final syncedLog = allLogs.firstWhere((l) => l.localId == savedLog.localId, orElse: () => savedLog);
-        return syncedLog;
-      }
+      await _syncService.syncUnsyncedFoodLogs();
+      // Fetch the updated log from DB to get the AI analysis results
+      final allLogs = await _localDb.getFoodLogs();
+      final syncedLog = allLogs.firstWhere((l) => l.localId == savedLog.localId, orElse: () => savedLog);
+      return syncedLog;
     }
     
     return savedLog;
   }
+
+  /// Save log locally only (used when the caller handles syncing separately).
+  Future<FoodLog> addFoodLogLocal(FoodLog log) async {
+    return await _localDb.insertFoodLog(
+      FoodLog(
+        photoPath: log.photoPath,
+        foodName: log.foodName,
+        mealTime: log.mealTime,
+        category: log.category,
+        nutritionNotes: log.nutritionNotes,
+        isSynced: false,
+      ),
+    );
+  }
+
+  /// Read all logs from local DB (no network call).
+  Future<List<FoodLog>> getFoodLogsLocal() async {
+    return await _localDb.getFoodLogs();
+  }
+
 
   Future<FoodLog> updateFoodLog(FoodLog log) async {
     final hasConnection = await _hasInternet();

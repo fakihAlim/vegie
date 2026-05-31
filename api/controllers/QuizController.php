@@ -161,20 +161,26 @@ class QuizController {
         );
         $insertStmt->execute([$userId, (int) $id, $isCorrect]);
 
+        $newlyUnlocked = [];
+        require_once __DIR__ . '/../helpers/gamification_manager.php';
+        $gamification = new GamificationManager();
+
         // Add points via GamificationManager
         if ($pointsEarned > 0) {
-            require_once __DIR__ . '/../helpers/gamification_manager.php';
-            $gamification = new GamificationManager();
             $gamification->addPoints($userId, $pointsEarned, 'quiz_answer');
         }
 
+        // Always check and award badges on quiz answers
+        $newlyUnlocked = $gamification->checkAndAwardBadges($userId);
+
         jsonSuccess([
-            'quiz_id'        => (int) $id,
-            'user_answer'    => $userAnswer,
-            'correct_answer' => $quiz['correct_answer'],
-            'is_correct'     => (bool) $isCorrect,
-            'points_earned'  => $pointsEarned,
-            'explanation'    => $quiz['explanation'],
+            'quiz_id'               => (int) $id,
+            'user_answer'           => $userAnswer,
+            'correct_answer'        => $quiz['correct_answer'],
+            'is_correct'            => (bool) $isCorrect,
+            'points_earned'         => $pointsEarned,
+            'explanation'           => $quiz['explanation'],
+            'newly_unlocked_badges' => $newlyUnlocked,
         ], $isCorrect ? 'Jawaban benar! 🎉' : 'Jawaban salah. Coba lagi di kuis berikutnya! 💪');
     }
 

@@ -9,16 +9,18 @@ class SyncService {
   final ApiService _apiService = ApiService();
   final LocalDatabase _localDb = LocalDatabase.instance;
 
-  Future<bool> syncUnsyncedFoodLogs() async {
+  /// Sync unsynced logs to server.
+  /// Returns a list of newly unlocked badge maps from the server responses,
+  /// so callers can show celebration dialogs.
+  Future<List<Map<String, dynamic>>> syncUnsyncedFoodLogs() async {
+    final List<Map<String, dynamic>> newlyUnlockedBadges = [];
     try {
       final unsyncedLogs = await _localDb.getUnsyncedFoodLogs();
-      if (unsyncedLogs.isEmpty) return true;
+      if (unsyncedLogs.isEmpty) return newlyUnlockedBadges;
 
       // In real scenario we might bulk upload texts, but since files are multipart,
       // it's easier to upload them one by one if they contain photos
-      
-      bool allSynced = true;
-      
+
       for (var log in unsyncedLogs) {
         try {
           if (log.photoPath != null && File(log.photoPath!).existsSync()) {
@@ -48,6 +50,14 @@ class SyncService {
             if (response['success'] == true) {
               await _markAsSynced(log, response['data']);
               
+              // Collect any newly unlocked badges from this sync
+              final badges = response['data']?['newly_unlocked_badges'];
+              if (badges is List) {
+                for (final b in badges) {
+                  if (b is Map<String, dynamic>) newlyUnlockedBadges.add(b);
+                }
+              }
+
               // Log the food log addition event with AI metadata!
               ActivityLogService.instance.logEvent(
                 'food_log_add',
@@ -60,7 +70,6 @@ class SyncService {
                 },
               );
             } else {
-              allSynced = false;
               print('[SyncService] Upload failed: ${response['message']}');
             }
           } else {
@@ -76,7 +85,15 @@ class SyncService {
             
             if (response['success'] == true) {
               await _markAsSynced(log, response['data']);
-              
+
+              // Collect any newly unlocked badges from this sync
+              final badges = response['data']?['newly_unlocked_badges'];
+              if (badges is List) {
+                for (final b in badges) {
+                  if (b is Map<String, dynamic>) newlyUnlockedBadges.add(b);
+                }
+              }
+
               // Log the food log addition event (no photo = no AI metadata)
               ActivityLogService.instance.logEvent(
                 'food_log_add',
@@ -88,20 +105,17 @@ class SyncService {
                   'ai_response_time': null,
                 },
               );
-            } else {
-              allSynced = false;
             }
           }
         } catch (e) {
-          allSynced = false;
           print("Error syncing log ${log.localId}: $e");
         }
       }
-      
-      return allSynced;
+
+      return newlyUnlockedBadges;
     } catch (e) {
       print("Sync error: $e");
-      return false;
+      return newlyUnlockedBadges;
     }
   }
   

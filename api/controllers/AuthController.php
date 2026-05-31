@@ -161,6 +161,10 @@ class AuthController {
         $evaluator = new TtmEvaluator($this->db);
         $progress = $evaluator->evaluateProgress($userId);
 
+        // Auto-check and award badges retroactively upon profile fetch
+        $gamification = new GamificationManager();
+        $gamification->checkAndAwardBadges($userId);
+
         jsonSuccess([
             'id' => (int) $user['id'],
             'name' => $user['name'],
@@ -176,6 +180,7 @@ class AuthController {
             'ttm_stage' => $progress['stage'],
             'is_feature_locked' => (bool)$progress['is_feature_locked'],
             'total_points' => $this->getUserTotalPoints($user['id']),
+            'unlocked_badges' => $this->getUnlockedBadgeCodes($userId),
             'stats' => [
                 'total_logs' => (int) $stats['total_logs'],
                 'total_groups' => (int) $groupStats['total_groups']
@@ -398,5 +403,20 @@ class AuthController {
         $foodLogPoints = (int) ($stmt->fetch()['total_points'] ?? 0);
 
         return $quizPoints + $foodLogPoints;
+    }
+
+    /**
+     * Return array of badge codes the user has unlocked.
+     * Used in getProfile() response so Flutter knows which badges to highlight.
+     */
+    private function getUnlockedBadgeCodes(int $userId): array {
+        $stmt = $this->db->prepare(
+            "SELECT b.code
+             FROM user_badges ub
+             JOIN badges b ON b.id = ub.badge_id
+             WHERE ub.user_id = ?"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
     }
 }

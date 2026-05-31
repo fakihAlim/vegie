@@ -6,6 +6,8 @@ import '../../config/theme.dart';
 import '../../models/news.dart';
 import '../../widgets/news_card.dart';
 import '../../services/quiz_service.dart';
+import '../../models/badge_model.dart';
+import '../../widgets/badge_celebration_dialog.dart';
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({Key? key}) : super(key: key);
@@ -158,6 +160,22 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
           final pointsEarned = res['data']?['points_earned'] ?? quizPoints;
           if (mounted) {
             Provider.of<AuthProvider>(context, listen: false).addLocalPoints(pointsEarned);
+          }
+        }
+
+        // 1. Refresh AuthProvider profile and badges to update points and unlocks
+        if (mounted) {
+          await Provider.of<AuthProvider>(context, listen: false).init();
+          await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
+        }
+
+        // 2. Show badge celebration dialogs if any badge was newly unlocked
+        final newBadges = res['data']?['newly_unlocked_badges'] ?? res['newly_unlocked_badges'];
+        if (newBadges is List && mounted) {
+          for (final badgeMap in newBadges) {
+            if (!mounted) break;
+            final badge = BadgeModel.fromJson(badgeMap);
+            await BadgeCelebrationDialog.show(context, badge);
           }
         }
       } else {

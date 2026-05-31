@@ -269,8 +269,32 @@ try {
             }
             break;
 
+        case 'badges':
+            require_once __DIR__ . '/controllers/BadgeController.php';
+            $controller = new BadgeController();
+            $segment1   = $segments[1] ?? null;
+            $segment2   = $segments[2] ?? null;
+
+            if ($segment1 === 'user' && $segment2 && $method === 'GET') {
+                // GET /badges/user/{userId}  — badge milik user tertentu (admin)
+                $controller->userBadges((int) $segment2);
+            } elseif ($segment1 && is_numeric($segment1) && $method === 'GET') {
+                // GET /badges/{id}
+                $controller->show((int) $segment1);
+            } elseif (!$segment1 && $method === 'GET') {
+                // GET /badges
+                $controller->index();
+            } elseif (!$segment1 && $method === 'POST') {
+                // POST /badges — tambah lencana baru (admin)
+                $controller->store();
+            } else {
+                jsonError('Badge endpoint not found', 404);
+            }
+            break;
+
         default:
             jsonError('Resource not found', 404);
+
     }
 
 } catch (Exception $e) {

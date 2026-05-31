@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
+import '../models/badge_model.dart';
 import '../services/auth_service.dart';
 import '../services/fcm_service.dart';
 import '../database/local_db.dart';
+import '../services/api_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final ApiService _apiService = ApiService();
   
   User? _user;
   bool _isLoading = false;
   bool _isInitialized = false;
+  List<BadgeModel> _userBadges = [];
 
   User? get user => _user;
   bool get isAuthenticated => _user != null;
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
+  List<BadgeModel> get userBadges => _userBadges;
 
   Future<void> init() async {
     _isLoading = true;
@@ -39,6 +44,8 @@ class AuthProvider with ChangeNotifier {
       if (freshUser != null) {
         _user = freshUser;
         notifyListeners();
+        // Fetch badges in parallel after profile is loaded
+        await _fetchBadges(freshUser.unlockedBadges);
       } else {
         await logout();
       }
@@ -48,6 +55,34 @@ class AuthProvider with ChangeNotifier {
         await logout();
       }
       print("Background profile refresh error: $e");
+    }
+  }
+
+  /// Fetches all master badges from the server and marks each
+  /// as unlocked if its code appears in [unlockedCodes].
+  Future<void> _fetchBadges(List<String> unlockedCodes) async {
+    try {
+      final response = await _apiService.get('/badges');
+      if (response['success'] == true && response['data'] is List) {
+        final List<dynamic> rawList = response['data'];
+        _userBadges = rawList.map((json) {
+          final badge = BadgeModel.fromJson(json as Map<String, dynamic>);
+          // Cross-reference with the user's unlocked badge codes
+          return badge.copyWith(
+            isUnlocked: unlockedCodes.contains(badge.code),
+          );
+        }).toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Fetch badges error: $e");
+    }
+  }
+
+  /// Force-refresh badges (e.g. after a new badge is awarded).
+  Future<void> refreshBadges() async {
+    if (_user != null) {
+      await _fetchBadges(_user!.unlockedBadges);
     }
   }
 

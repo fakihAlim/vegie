@@ -7,9 +7,11 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
+import '../../models/badge_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
 import '../../services/activity_log_service.dart';
+import '../../widgets/badge_celebration_dialog.dart';
 
 class AddFoodLogScreen extends StatefulWidget {
   const AddFoodLogScreen({Key? key}) : super(key: key);
@@ -241,14 +243,20 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       photoPath: _imageFile!.path,
     );
 
-    final success = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
+    final newBadges = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
 
     setState(() => _isSaving = false);
 
-    if (success && mounted) {
-      // Refresh AuthProvider profile to update Carbon footprint & points
-      Provider.of<AuthProvider>(context, listen: false).init();
-      
+    if (!mounted) return;
+
+    if (newBadges.isNotEmpty || true) {
+      // Refresh AuthProvider profile to update Carbon footprint & points & badge codes
+      await Provider.of<AuthProvider>(context, listen: false).init();
+      // Also refresh the provider's badge list
+      await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
+    }
+
+    if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -256,13 +264,13 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
           backgroundColor: AppTheme.success,
         ),
       );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Gagal menyimpan. Periksa koneksi internet.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+      // Show badge celebration dialogs one by one (sequential awaits)
+      for (final badgeMap in newBadges) {
+        if (!mounted) break;
+        final badge = BadgeModel.fromJson(badgeMap);
+        await BadgeCelebrationDialog.show(context, badge);
+      }
     }
   }
 

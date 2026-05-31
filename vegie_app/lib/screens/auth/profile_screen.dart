@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lottie/lottie.dart';
 import '../../providers/auth_provider.dart';
 import '../../config/theme.dart';
 import '../../services/streak_service.dart';
 import '../../models/user.dart';
+import '../../models/badge_model.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
@@ -28,37 +30,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Definition of achievements/badges
-  static const List<Map<String, dynamic>> _allBadges = [
-    {
-      'id': 'beginner',
-      'name': 'Pemula Hijau',
-      'icon': Icons.eco_rounded,
-      'color': Colors.green,
-      'desc': 'Memulai pola makan plant-based',
-    },
-    {
-      'id': 'protein',
-      'name': 'Pakar Protein',
-      'icon': Icons.fitness_center_rounded,
-      'color': Colors.blue,
-      'desc': 'Menjawab kuis gizi dengan benar',
-    },
-    {
-      'id': 'camera',
-      'name': 'AI Explorer',
-      'icon': Icons.camera_alt_rounded,
-      'color': Colors.purple,
-      'desc': 'Mencatat makanan via Kamera AI',
-    },
-    {
-      'id': 'streak_master',
-      'name': 'Streak Master',
-      'icon': Icons.bolt_rounded,
-      'color': Colors.amber,
-      'desc': 'Mencapai streak pencatatan 3 hari',
-    },
-  ];
+  // Grayscale ColorFilter matrix — desaturates any widget to B&W
+  static const ColorFilter _grayscaleFilter = ColorFilter.matrix([
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0.2126, 0.7152, 0.0722, 0, 0,
+    0,      0,      0,      0.4, 0,
+  ]);
 
   Widget _buildAvatarWidget(String? photo, String name, {double size = 110}) {
     if (photo != null && photo.isNotEmpty) {
@@ -114,6 +92,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildLottieWidget(
+    String path, {
+    double? width,
+    double? height,
+    bool repeat = false,
+    BoxFit? fit,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
+  }) {
+    if (path.startsWith('http') || path.contains('uploads/')) {
+      return Lottie.network(
+        path,
+        width: width,
+        height: height,
+        repeat: repeat,
+        fit: fit ?? BoxFit.contain,
+        errorBuilder: errorBuilder,
+      );
+    } else {
+      return Lottie.asset(
+        path,
+        width: width,
+        height: height,
+        repeat: repeat,
+        fit: fit ?? BoxFit.contain,
+        errorBuilder: errorBuilder,
+      );
+    }
   }
 
   Widget _buildProfileDetailCard(String label, String value, IconData icon) {
@@ -416,127 +423,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 36),
               
-              // 4. Section Pencapaian Saya (Badges list)
-              const Text(
-                'Lencana Pencapaian',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
-              const SizedBox(height: 16),
-              
-              // Check empty state
-              user.unlockedBadges.isEmpty
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade100),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(Icons.military_tech_rounded, size: 48, color: Colors.grey.shade300),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Catat makanan dan jawab kuis untuk mendapatkan lencana pertamamu!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontStyle: FontStyle.italic,
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.85,
-                      ),
-                      itemCount: _allBadges.length,
-                      itemBuilder: (context, index) {
-                        final badge = _allBadges[index];
-                        final String id = badge['id'];
-                        final String name = badge['name'];
-                        final IconData icon = badge['icon'];
-                        final Color color = badge['color'];
-                        final String desc = badge['desc'];
-                        final bool isUnlocked = user.unlockedBadges.contains(id);
-
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isUnlocked ? color.withOpacity(0.2) : Colors.grey.shade100,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              )
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Opacity(
-                                    opacity: isUnlocked ? 1.0 : 0.25,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: color.withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(icon, color: color, size: 36),
-                                    ),
-                                  ),
-                                  if (!isUnlocked)
-                                    const CircleAvatar(
-                                      radius: 14,
-                                      backgroundColor: Colors.black54,
-                                      child: Icon(Icons.lock, size: 14, color: Colors.white),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: isUnlocked ? AppTheme.textPrimary : Colors.grey.shade500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                desc,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade400,
-                                  height: 1.3,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+              // 4. Section Etalase Lencana (Lottie-powered)
+              _buildBadgeSection(context),
               
               const SizedBox(height: 40),
               
@@ -556,6 +444,404 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Badge Section
+  // ────────────────────────────────────────────────────────────────────────
+
+  Widget _buildBadgeSection(BuildContext context) {
+    final badges = context.watch<AuthProvider>().userBadges;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Etalase Lencana',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            if (badges.isNotEmpty)
+              Text(
+                '${badges.where((b) => b.isUnlocked).length}/${badges.length} terbuka',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Empty state — server belum mengembalikan data badge
+        if (badges.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade100),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.military_tech_rounded, size: 52, color: Colors.grey.shade300),
+                const SizedBox(height: 14),
+                const Text(
+                  'Catat makanan & jawab kuis\nuntuk mendapatkan lencana pertamamu!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.78, // sedikit lebih tinggi agar nama tidak terpotong
+            ),
+            itemCount: badges.length,
+            itemBuilder: (context, index) => _buildBadgeGridItem(badges[index]),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBadgeGridItem(BadgeModel badge) {
+    return GestureDetector(
+      onTap: () {
+        if (badge.isUnlocked) {
+          // Tampilkan tooltip/detail saat badge sudah terbuka
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              contentPadding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildLottieWidget(
+                    badge.lottieFile,
+                    width: 120,
+                    height: 120,
+                    repeat: false,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.military_tech_rounded,
+                      size: 80,
+                      color: Color(0xFFFFD700),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    badge.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    badge.description,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Tutup'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          // Tampilkan kemajuan/kriteria saat badge masih terkunci
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Grayscale / Lock icon container
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ColorFiltered(
+                          colorFilter: _grayscaleFilter,
+                          child: _buildLottieWidget(
+                            badge.lottieFile,
+                            width: 90,
+                            height: 90,
+                            repeat: false,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.military_tech_rounded,
+                              size: 70,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade700,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(Icons.lock_rounded, size: 18, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Lencana Terkunci 🔒',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade500,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    badge.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    badge.description,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Progress Bar & Stats
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade100),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Kemajuan Anda',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                            ),
+                            Text(
+                              '${badge.currentProgress} / ${badge.targetProgress} ${badge.progressUnit}',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: badge.targetProgress > 0 ? (badge.currentProgress / badge.targetProgress) : 0.0,
+                            backgroundColor: Colors.grey.shade200,
+                            color: AppTheme.primary,
+                            minHeight: 8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Mengerti',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: badge.isUnlocked
+                ? AppTheme.accent.withOpacity(0.5)
+                : Colors.grey.shade100,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: badge.isUnlocked
+                  ? AppTheme.primary.withOpacity(0.06)
+                  : Colors.black.withOpacity(0.025),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // ── Konten utama ────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Lottie (atau fallback) dengan ColorFiltered jika locked
+                  Expanded(
+                    child: badge.isUnlocked
+                        ? _buildLottieWidget(
+                            badge.lottieFile,
+                            fit: BoxFit.contain,
+                            repeat: false, // diam di frame terakhir
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.military_tech_rounded,
+                              size: 52,
+                              color: Color(0xFFFFD700),
+                            ),
+                          )
+                        : ColorFiltered(
+                            colorFilter: _grayscaleFilter,
+                            child: _buildLottieWidget(
+                              badge.lottieFile,
+                              fit: BoxFit.contain,
+                              repeat: false,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.military_tech_rounded,
+                                size: 52,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Nama badge
+                  Text(
+                    badge.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: badge.isUnlocked
+                          ? AppTheme.textPrimary
+                          : Colors.grey.shade400,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Gembok di sudut kanan atas (hanya jika locked) ─────
+            if (!badge.isUnlocked)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.lock_rounded, size: 10, color: Colors.white),
+                ),
+              ),
+
+            // ── Tanda centang/bintang di sudut kiri atas (jika unlocked) ─
+            if (badge.isUnlocked)
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFD700),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.star_rounded, size: 10, color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 

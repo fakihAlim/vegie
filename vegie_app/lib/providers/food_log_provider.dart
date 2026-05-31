@@ -101,22 +101,34 @@ class FoodLogProvider with ChangeNotifier {
     ]);
   }
 
-  Future<bool> addLog(FoodLog log) async {
+  /// Add a food log. Returns list of newly-unlocked badges (may be empty).
+  /// The caller (screen) should show BadgeCelebrationDialog for each badge.
+  Future<List<Map<String, dynamic>>> addLog(FoodLog log) async {
     try {
-      final newLog = await _foodLogService.addFoodLog(log);
-      _logs.insert(0, newLog);
-      // Sort by descending time
+      // First, save locally
+      final savedLog = await _foodLogService.addFoodLogLocal(log);
+      _logs.insert(0, savedLog);
       _logs.sort((a, b) => b.mealTime.compareTo(a.mealTime));
       _updateLogDates();
-      
+      notifyListeners();
+
+      // Then sync online and capture any newly unlocked badges
+      final newBadges = await _syncService.syncUnsyncedFoodLogs();
+
+      // Refresh the log from DB so it has server data (nutrition, points, etc.)
+      final allLogs = await _foodLogService.getFoodLogsLocal();
+      final syncedLog = allLogs.firstWhere((l) => l.localId == savedLog.localId, orElse: () => savedLog);
+      final idx = _logs.indexWhere((l) => l.localId == savedLog.localId);
+      if (idx != -1) _logs[idx] = syncedLog;
+
       // Refresh streak since a new log was added
       fetchStreak();
-      
       notifyListeners();
-      return true;
+
+      return newBadges;
     } catch (e) {
       print("Error adding log: $e");
-      return false;
+      return [];
     }
   }
 
@@ -152,7 +164,7 @@ class FoodLogProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    await _syncService.syncUnsyncedFoodLogs();
+    await _syncService.syncUnsyncedFoodLogs(); // badges ignored during manual sync
     await fetchLogs();
     await fetchStreak();
   }

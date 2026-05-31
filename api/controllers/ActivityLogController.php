@@ -79,7 +79,16 @@ class ActivityLogController {
                 $appVersion
             ]);
 
-            jsonSuccess(null, 'Activity log stored successfully');
+            $newlyUnlocked = [];
+            if ($action === 'news_view') {
+                require_once __DIR__ . '/../helpers/gamification_manager.php';
+                $gamification = new GamificationManager();
+                $newlyUnlocked = $gamification->checkAndAwardBadges($userId);
+            }
+
+            jsonSuccess([
+                'newly_unlocked_badges' => $newlyUnlocked
+            ], 'Activity log stored successfully');
         } catch (Exception $e) {
             // Keep fire-and-forget: log the error on the server but return a standard response or custom log.
             // Since this is non-critical, we don't want to crash the client.

@@ -2,6 +2,10 @@
 /**
  * Gamification Manager Helper
  * LovingHarmony API
+ *
+ * Mengelola:
+ *  - Penambahan poin ke activity log
+ *  - Pengecekan & pemberian badge berdasarkan milestone perilaku
  */
 
 class GamificationManager {
@@ -11,13 +15,12 @@ class GamificationManager {
         $this->db = Database::getInstance()->getConnection();
     }
 
+    // -----------------------------------------------------------------------
+    // Points
+    // -----------------------------------------------------------------------
+
     /**
-     * Log earned points in the activity logs database for auditing
-     * 
-     * @param int $userId
-     * @param int $points
-     * @param string $reason
-     * @return bool
+     * Log earned points in the activity logs database for auditing.
      */
     public function addPoints(int $userId, int $points, string $reason = 'quiz'): bool {
         try {
@@ -26,11 +29,166 @@ class GamificationManager {
             );
             $extraData = json_encode([
                 'points_earned' => $points,
-                'reason' => $reason
+                'reason'        => $reason,
             ]);
             return $stmt->execute([$userId, 'earn_points', $extraData]);
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Badges
+    // -----------------------------------------------------------------------
+
+    /**
+     * Periksa semua milestone dan berikan badge yang belum dimiliki secara dinamis.
+     *
+     * @param int $userId
+     * @return array  List BadgeModel-like arrays yang BARU diberikan pada panggilan ini.
+     */
+    public function checkAndAwardBadges(int $userId): array {
+        $newlyAwarded = [];
+
+        // Ambil semua badge code yang sudah dimiliki user (untuk skip)
+        $stmt = $this->db->prepare("
+            SELECT b.code
+            FROM user_badges ub
+            JOIN badges b ON b.id = ub.badge_id
+            WHERE ub.user_id = ?
+        ");
+        $stmt->execute([$userId]);
+        $ownedCodes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        // Ambil semua katalog master badge aktif
+        $stmt = $this->db->prepare("SELECT * FROM badges");
+        $stmt->execute();
+        $allBadges = $stmt->fetchAll();
+
+        foreach ($allBadges as $badge) {
+            $code = $badge['code'];
+            // Lewati jika sudah punya
+            if (in_array($code, $ownedCodes)) continue;
+
+            try {
+                $category = $badge['category'] ?? 'plant_lover';
+                $target = (int) ($badge['target_value'] ?? 1);
+
+                if ($this->evaluateProgress($userId, $category, $target)) {
+                    $awarded = $this->awardBadge($userId, $code);
+                    if ($awarded) {
+                        $newlyAwarded[] = $awarded;
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Badge check error [$code]: " . $e->getMessage());
+            }
+        }
+
+        return $newlyAwarded;
+    }
+
+    // -----------------------------------------------------------------------
+    // Milestone checkers (dynamic and category-based)
+    // -----------------------------------------------------------------------
+
+    private function evaluateProgress(int $userId, string $category, int $target): bool {
+        switch ($category) {
+            case 'plant_lover':
+                // total log makanan nabati (points = 50)
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM food_logs WHERE user_id = ? AND points = 50");
+                $stmt->execute([$userId]);
+                return (int) $stmt->fetchColumn() >= $target;
+
+            case 'explorer':
+                // total baca artikel
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM user_activity_logs WHERE user_id = ? AND action = 'news_view'");
+                $stmt->execute([$userId]);
+                return (int) $stmt->fetchColumn() >= $target;
+
+            case 'streak':
+                // total hari streak berturut-turut
+                $stmt = $this->db->prepare("
+                    SELECT DISTINCT DATE(meal_time) AS log_date
+                    FROM food_logs
+                    WHERE user_id = ?
+                    ORDER BY log_date DESC
+                ");
+                $stmt->execute([$userId]);
+                $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                
+                $streak = 0;
+                if (!empty($dates)) {
+                    $today = new DateTime();
+                    $yesterday = new DateTime('-1 day');
+                    $lastLogDate = new DateTime($dates[0]);
+                    
+                    if ($lastLogDate->format('Y-m-d') === $today->format('Y-m-d') || 
+                        $lastLogDate->format('Y-m-d') === $yesterday->format('Y-m-d')) {
+                        $streak = 1;
+                        for ($i = 0; $i < count($dates) - 1; $i++) {
+                            $curr = new DateTime($dates[$i]);
+                            $next = new DateTime($dates[$i + 1]);
+                            if ($curr->diff($next)->days === 1) {
+                                $streak++;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+                return $streak >= $target;
+
+            case 'quiz_ace':
+                // total jawaban benar kuis
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM user_quizzes WHERE user_id = ? AND is_correct = 1");
+                $stmt->execute([$userId]);
+                return (int) $stmt->fetchColumn() >= $target;
+
+            default:
+                return false;
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Award helper
+    // -----------------------------------------------------------------------
+
+    /**
+     * Simpan badge ke tabel user_badges dan kembalikan data badge-nya.
+     * Menggunakan INSERT IGNORE sehingga aman dipanggil berulang kali.
+     */
+    private function awardBadge(int $userId, string $code): ?array {
+        // Cari badge_id
+        $stmt = $this->db->prepare("SELECT * FROM badges WHERE code = ?");
+        $stmt->execute([$code]);
+        $badge = $stmt->fetch();
+        if (!$badge) return null;
+
+        // Simpan relasi (idempotent)
+        $stmt = $this->db->prepare(
+            "INSERT IGNORE INTO user_badges (user_id, badge_id) VALUES (?, ?)"
+        );
+        $stmt->execute([$userId, $badge['id']]);
+
+        if ($this->db->lastInsertId() == 0) {
+            // Sudah ada sebelumnya — tidak benar-benar baru
+            return null;
+        }
+
+        // Log ke activity
+        $this->db->prepare(
+            "INSERT INTO user_activity_logs (user_id, action, extra_data) VALUES (?, 'badge_awarded', ?)"
+        )->execute([$userId, json_encode(['badge_code' => $code, 'badge_name' => $badge['name']])]);
+
+        return [
+            'id'          => (int) $badge['id'],
+            'code'        => $badge['code'],
+            'name'        => $badge['name'],
+            'description' => $badge['description'] ?? '',
+            'lottie_file' => $badge['lottie_file'] ?? 'assets/lottie/default.json',
+            'is_unlocked' => true,
+            'awarded_at'  => date('Y-m-d H:i:s'),
+        ];
     }
 }
