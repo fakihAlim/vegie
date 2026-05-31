@@ -72,6 +72,7 @@ class AuthController {
                 'age' => null,
                 'weight' => null,
                 'height' => null,
+                'total_carbon_saved' => 0.00,
                 'join_date' => $joinDate,
                 'is_onboarding_completed' => false,
                 'ttm_stage' => $progress['stage'],
@@ -121,6 +122,7 @@ class AuthController {
                 'age' => $user['age'] !== null ? (int)$user['age'] : null,
                 'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
                 'height' => $user['height'] !== null ? (float)$user['height'] : null,
+                'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
                 'join_date' => $user['join_date'],
                 'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
                 'ttm_stage' => $progress['stage'],
@@ -138,7 +140,7 @@ class AuthController {
         $userId = $auth['user_id'];
 
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, age, weight, height, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, total_carbon_saved, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -168,6 +170,7 @@ class AuthController {
             'age' => $user['age'] !== null ? (int)$user['age'] : null,
             'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
             'height' => $user['height'] !== null ? (float)$user['height'] : null,
+            'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],
@@ -265,7 +268,7 @@ class AuthController {
 
         // Return updated profile
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, age, weight, height, join_date, is_onboarding_completed FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, total_carbon_saved, join_date, is_onboarding_completed FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -282,6 +285,7 @@ class AuthController {
             'age' => $user['age'] !== null ? (int)$user['age'] : null,
             'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
             'height' => $user['height'] !== null ? (float)$user['height'] : null,
+            'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],

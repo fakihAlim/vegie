@@ -21,7 +21,7 @@ class LocalDatabase {
       databaseFactory = databaseFactoryFfiWebNoWebWorker;
       return await openDatabase(
         filePath,
-        version: 3,
+        version: 4,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
       );
@@ -32,7 +32,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -62,7 +62,8 @@ CREATE TABLE food_logs_local (
   protein $realNullable,
   is_shared INTEGER DEFAULT 0,
   is_synced $boolType,
-  created_at $textType
+  created_at $textType,
+  raw_response $textNullable
 )
 ''');
   }
@@ -78,6 +79,10 @@ CREATE TABLE food_logs_local (
     if (oldVersion < 3) {
       // Add shared column
       await db.execute('ALTER TABLE food_logs_local ADD COLUMN is_shared INTEGER DEFAULT 0');
+    }
+    if (oldVersion < 4) {
+      // Add raw_response column
+      await db.execute('ALTER TABLE food_logs_local ADD COLUMN raw_response TEXT');
     }
   }
 
@@ -102,6 +107,7 @@ CREATE TABLE food_logs_local (
       isShared: log.isShared,
       isSynced: log.isSynced,
       createdAt: log.createdAt,
+      rawResponse: log.rawResponse,
     );
   }
 

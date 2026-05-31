@@ -25,6 +25,7 @@ require_once __DIR__ . '/helpers/ttm_evaluator.php';
 require_once __DIR__ . '/helpers/ai_quiz_generator.php';
 require_once __DIR__ . '/helpers/push_notification.php';
 require_once __DIR__ . '/helpers/gamification_manager.php';
+require_once __DIR__ . '/helpers/carbon_calculator.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/middleware/auth.php';
 

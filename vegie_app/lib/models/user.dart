@@ -7,6 +7,7 @@ class User {
   final int? age;
   final double? weight;
   final double? height;
+  double totalCarbonSaved; // Non-final to allow incrementing locally
   final String joinDate;
   final Map<String, int>? stats;
   final bool isOnboardingCompleted;
@@ -24,6 +25,7 @@ class User {
     this.age,
     this.weight,
     this.height,
+    this.totalCarbonSaved = 0.0,
     required this.joinDate,
     this.stats,
     this.isOnboardingCompleted = false,
@@ -43,6 +45,7 @@ class User {
       age: json['age'] != null ? (json['age'] as num).toInt() : null,
       weight: json['weight'] != null ? (json['weight'] as num).toDouble() : null,
       height: json['height'] != null ? (json['height'] as num).toDouble() : null,
+      totalCarbonSaved: json['total_carbon_saved'] != null ? (json['total_carbon_saved'] as num).toDouble() : 0.0,
       joinDate: json['join_date'],
       stats: json['stats'] != null 
           ? Map<String, int>.from(json['stats']) 
@@ -67,6 +70,7 @@ class User {
       'age': age,
       'weight': weight,
       'height': height,
+      'total_carbon_saved': totalCarbonSaved,
       'join_date': joinDate,
       'stats': stats,
       'is_onboarding_completed': isOnboardingCompleted,
@@ -86,6 +90,7 @@ class User {
     int? age,
     double? weight,
     double? height,
+    double? totalCarbonSaved,
     String? joinDate,
     Map<String, int>? stats,
     bool? isOnboardingCompleted,
@@ -103,6 +108,7 @@ class User {
       age: age ?? this.age,
       weight: weight ?? this.weight,
       height: height ?? this.height,
+      totalCarbonSaved: totalCarbonSaved ?? this.totalCarbonSaved,
       joinDate: joinDate ?? this.joinDate,
       stats: stats ?? this.stats,
       isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,

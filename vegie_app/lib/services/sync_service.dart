@@ -122,6 +122,7 @@ class SyncService {
       isShared: data['is_shared'] == true || data['is_shared'] == 1 || log.isShared,
       isSynced: true,
       createdAt: log.createdAt,
+      rawResponse: data['raw_response'] ?? data['ai_raw_response'] ?? log.rawResponse,
     );
     await _localDb.updateFoodLog(updatedLog);
   }

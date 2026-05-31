@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
+import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
 import '../../config/theme.dart';
@@ -436,8 +437,77 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   Widget _buildNutritionData(FoodLog log) {
     final maxVal = [log.carbs ?? 0, log.fat ?? 0, log.protein ?? 0, 1.0].reduce((a, b) => a > b ? a : b);
     
+    List<dynamic> items = [];
+    if (log.rawResponse != null) {
+      try {
+        final Map<String, dynamic> parsed = Map<String, dynamic>.from(jsonDecode(log.rawResponse!));
+        if (parsed['items'] != null && parsed['items'] is List) {
+          items = parsed['items'];
+        }
+      } catch (e) {
+        // Ignored
+      }
+    }
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (items.isNotEmpty) ...[
+          Text(
+            'KOMPOSISI BAHAN',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...items.map<Widget>((item) {
+            final double itemCal = item['kalori'] != null ? (item['kalori'] as num).toDouble() : 0.0;
+            final double itemCarbs = item['karbohidrat'] != null ? (item['karbohidrat'] as num).toDouble() : 0.0;
+            final double itemFat = item['lemak'] != null ? (item['lemak'] as num).toDouble() : 0.0;
+            final double itemProtein = item['protein'] != null ? (item['protein'] as num).toDouble() : 0.0;
+            
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade100),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['nama'] ?? 'Bahan',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildCompactNutrientBadge('${itemCal.toStringAsFixed(0)} kcal', Colors.blue.shade700, Colors.blue.shade50),
+                        _buildCompactNutrientBadge('${itemCarbs.toStringAsFixed(1)}g Karbo', Colors.orange.shade700, Colors.orange.shade50),
+                        _buildCompactNutrientBadge('${itemFat.toStringAsFixed(1)}g Lemak', Colors.yellow.shade900, Colors.yellow.shade50),
+                        _buildCompactNutrientBadge('${itemProtein.toStringAsFixed(1)}g Prot', Colors.red.shade700, Colors.red.shade50),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+          const SizedBox(height: 8),
+          Divider(height: 1, color: Colors.blue.shade100),
+          const SizedBox(height: 8),
+        ],
         // Total Energy
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -449,7 +519,10 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total Energi', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+              Text(
+                items.isNotEmpty ? 'Total Nutrisi' : 'Total Energi', 
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900)
+              ),
               Text('${log.calories?.toStringAsFixed(0)} kcal', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blue.shade700, fontSize: 16)),
             ],
           ),
@@ -514,6 +587,24 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           child: Text('${value.toStringAsFixed(1)}g', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
         ),
       ],
+    );
+  }
+
+  Widget _buildCompactNutrientBadge(String text, Color textColor, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
     );
   }
 

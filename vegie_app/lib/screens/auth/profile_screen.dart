@@ -328,6 +328,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
+              const SizedBox(height: 24),
+              
+              // 3.5 Card Dampak Ekologis
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade700, Colors.teal.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.15),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Dampak Ekologis Anda 🌿',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Anda telah menghemat ${user.totalCarbonSaved.toStringAsFixed(2)} kg CO₂e!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Pola makan vegetarian Anda secara nyata mengurangi pemanasan global.',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Divider(color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
+                    const SizedBox(height: 16),
+                    // Equivalences
+                    _buildEcologicalRow(
+                      Icons.directions_car_rounded,
+                      Colors.blue.shade100,
+                      'Setara menghemat ${(user.totalCarbonSaved * 0.43).toStringAsFixed(2)} Liter Bensin',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildEcologicalRow(
+                      Icons.forest_rounded,
+                      Colors.green.shade100,
+                      'Setara kemampuan ${(user.totalCarbonSaved / 21.77).toStringAsFixed(4)} Pohon menyerap karbon dalam setahun',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildEcologicalRow(
+                      Icons.battery_charging_full_rounded,
+                      Colors.amber.shade100,
+                      'Setara mengisi daya ${(user.totalCarbonSaved * 121.6).toStringAsFixed(1)} Smartphone',
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 36),
               
               // 4. Section Pencapaian Saya (Badges list)
@@ -520,6 +606,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEcologicalRow(IconData icon, Color iconColor, String text) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

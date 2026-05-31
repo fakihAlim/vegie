@@ -156,6 +156,21 @@ class FoodLogController {
         $evaluator = new TtmEvaluator($this->db);
         $progress = $evaluator->evaluateProgress($userId);
 
+        // Calculate carbon saved
+        $calculator = new CarbonCalculator($this->db);
+        $foodItems = [
+            [
+                'name' => $foodName,
+                'weight' => 0.15 // Default serving weight 150g = 0.15 kg
+            ]
+        ];
+        $carbonSavedThisMeal = $calculator->calculateAndSaveCarbon($userId, $foodItems);
+
+        // Fetch updated total_carbon_saved
+        $userStmt = $this->db->prepare("SELECT total_carbon_saved FROM users WHERE id = ?");
+        $userStmt->execute([$userId]);
+        $totalCarbonSaved = (float)($userStmt->fetch()['total_carbon_saved'] ?? 0.00);
+
         jsonSuccess([
             'id' => (int) $logId,
             'photo' => $photoPath ? getUploadUrl($photoPath) : null,
@@ -169,9 +184,12 @@ class FoodLogController {
             'protein' => $protein,
             'ai_provider' => $aiResult['ai_provider'] ?? null,
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
+            'raw_response' => $aiResult['raw_response'] ?? null,
             'ai_response_time' => $aiResult['ai_response_time'] ?? null,
             'current_ttm_stage' => $progress['stage'],
-            'is_feature_locked' => (bool)$progress['is_feature_locked']
+            'is_feature_locked' => (bool)$progress['is_feature_locked'],
+            'carbon_saved_this_meal' => $carbonSavedThisMeal,
+            'total_carbon_saved' => $totalCarbonSaved
         ], 'Food log created successfully', 201);
     }
 
@@ -313,6 +331,7 @@ class FoodLogController {
             'protein' => $aiResult['protein'],
             'ai_provider' => $aiResult['ai_provider'] ?? null,
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
+            'raw_response' => $aiResult['raw_response'] ?? null,
             'ai_response_time' => $aiResult['ai_response_time'] ?? null,
         ], 'Nutrition analysis completed');
     }
@@ -492,6 +511,7 @@ class FoodLogController {
             'protein' => $log['protein'] !== null ? (float) $log['protein'] : null,
             'is_shared' => isset($log['is_shared']) ? (bool) $log['is_shared'] : false,
             'created_at' => $log['created_at'],
+            'raw_response' => $log['raw_response'] ?? null,
         ];
     }
 }

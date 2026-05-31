@@ -139,11 +139,22 @@ function analyzeWithOllama($base64) {
     $endpoint = rtrim(OLLAMA_BASE_URL, '/') . '/api/generate';
 
     $prompt = 'You are a nutrition analysis API. Identify the food in this image. '
+        . 'If the image contains a composite meal (a plate containing multiple distinct food items/ingredients, e.g., Gado-Gado, Nasi Rames, etc.), '
+        . 'you MUST identify each individual food item/ingredient, calculate their individual nutrition values, and sum them up for the total. '
         . 'Return ONLY a valid raw JSON object with exactly these keys: '
-        . '"nama_makanan", "kalori", "karbohidrat", "lemak", "protein". '
-        . 'Nutrition values for "karbohidrat", "lemak", "protein" must be numbers in grams (float). '
-        . '"kalori" must be a number in kcal (float). '
-        . 'Do not include markdown, explanations, or extra text.';
+        . '"nama_makanan" (string, the name of the dish, or the primary food if single item), '
+        . '"kalori" (float, total kcal), '
+        . '"karbohidrat" (float, total carbs in grams), '
+        . '"lemak" (float, total fat in grams), '
+        . '"protein" (float, total protein in grams), '
+        . '"items" (array of objects, representing each detected food item/ingredient in the meal. Each object MUST have these keys: '
+        . '"nama" (string, name of the item, e.g., "Tahu", "Tempe", "Saus Kacang"), '
+        . '"kalori" (float, kcal for this item), '
+        . '"karbohidrat" (float, carbs in grams for this item), '
+        . '"lemak" (float, fat in grams for this item), '
+        . '"protein" (float, protein in grams for this item)). '
+        . 'If there is only one food item in the image (e.g., just an apple), the "items" array should still contain that single item. '
+        . 'Do not include markdown, explanations, or extra text. Output ONLY the raw JSON object.';
 
     $payload = json_encode([
         'model'  => OLLAMA_MODEL,
@@ -177,7 +188,7 @@ function analyzeWithOllama($base64) {
     $parsed = parseNutritionResponse($rawText);
     if ($parsed !== null) {
         $parsed['ai_provider'] = 'Ollama';
-        $parsed['raw_response'] = $rawText;
+        $parsed['raw_response'] = json_encode($parsed);
     }
     return $parsed;
 }
@@ -197,11 +208,22 @@ function analyzeWithGemini($base64) {
     $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . GEMINI_API_KEY;
 
     $prompt = 'You are a nutrition analysis API. Identify the food in this image. '
+        . 'If the image contains a composite meal (a plate containing multiple distinct food items/ingredients, e.g., Gado-Gado, Nasi Rames, etc.), '
+        . 'you MUST identify each individual food item/ingredient, calculate their individual nutrition values, and sum them up for the total. '
         . 'Return ONLY a valid raw JSON object with exactly these keys: '
-        . '"nama_makanan", "kalori", "karbohidrat", "lemak", "protein". '
-        . 'Nutrition values for "karbohidrat", "lemak", "protein" must be numbers in grams (float). '
-        . '"kalori" must be a number in kcal (float). '
-        . 'Do not include markdown, explanations, or extra text.';
+        . '"nama_makanan" (string, the name of the dish, or the primary food if single item), '
+        . '"kalori" (float, total kcal), '
+        . '"karbohidrat" (float, total carbs in grams), '
+        . '"lemak" (float, total fat in grams), '
+        . '"protein" (float, total protein in grams), '
+        . '"items" (array of objects, representing each detected food item/ingredient in the meal. Each object MUST have these keys: '
+        . '"nama" (string, name of the item, e.g., "Tahu", "Tempe", "Saus Kacang"), '
+        . '"kalori" (float, kcal for this item), '
+        . '"karbohidrat" (float, carbs in grams for this item), '
+        . '"lemak" (float, fat in grams for this item), '
+        . '"protein" (float, protein in grams for this item)). '
+        . 'If there is only one food item in the image (e.g., just an apple), the "items" array should still contain that single item. '
+        . 'Do not include markdown, explanations, or extra text. Output ONLY the raw JSON object.';
 
     $payload = json_encode([
         'contents' => [
@@ -240,7 +262,7 @@ function analyzeWithGemini($base64) {
     $parsed = parseNutritionResponse($rawText);
     if ($parsed !== null) {
         $parsed['ai_provider'] = 'API';
-        $parsed['raw_response'] = $rawText;
+        $parsed['raw_response'] = json_encode($parsed);
     }
     return $parsed;
 }
@@ -280,11 +302,32 @@ function parseNutritionResponse($rawText) {
         ? floatval($nutrition['kalori']) 
         : ($carbsVal * 4 + $fatVal * 9 + $proteinVal * 4);
 
+    $items = [];
+    if (isset($nutrition['items']) && is_array($nutrition['items'])) {
+        foreach ($nutrition['items'] as $item) {
+            if (isset($item['nama'])) {
+                $iCarbs = isset($item['karbohidrat']) ? floatval($item['karbohidrat']) : 0.0;
+                $iFat = isset($item['lemak']) ? floatval($item['lemak']) : 0.0;
+                $iProtein = isset($item['protein']) ? floatval($item['protein']) : 0.0;
+                $iCal = isset($item['kalori']) ? floatval($item['kalori']) : ($iCarbs * 4 + $iFat * 9 + $iProtein * 4);
+                
+                $items[] = [
+                    'nama' => strval($item['nama']),
+                    'kalori' => $iCal,
+                    'karbohidrat' => $iCarbs,
+                    'lemak' => $iFat,
+                    'protein' => $iProtein
+                ];
+            }
+        }
+    }
+
     return [
         'food_name' => $nutrition['nama_makanan'] ?? 'Tidak Dikenali',
         'calories'  => $caloriesVal,
         'carbs'     => $carbsVal,
         'fat'       => $fatVal,
         'protein'   => $proteinVal,
+        'items'     => $items
     ];
 }

@@ -14,6 +14,7 @@ class FoodLog {
   final bool isShared; // Is shared to discover feed
   final bool isSynced;
   final DateTime createdAt;
+  final String? rawResponse; // Local and server cached full raw AI response
 
   FoodLog({
     this.id,
@@ -31,6 +32,7 @@ class FoodLog {
     this.isShared = false,
     this.isSynced = true,
     DateTime? createdAt,
+    this.rawResponse,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory FoodLog.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,7 @@ class FoodLog {
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
+      rawResponse: json['raw_response'] ?? json['ai_raw_response'],
     );
   }
 
@@ -70,6 +73,7 @@ class FoodLog {
       isShared: map['is_shared'] == 1,
       isSynced: map['is_synced'] == 1,
       createdAt: DateTime.parse(map['created_at']),
+      rawResponse: map['raw_response'],
     );
   }
 
@@ -90,6 +94,7 @@ class FoodLog {
       'is_shared': isShared ? 1 : 0,
       'is_synced': isSynced ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
+      'raw_response': rawResponse,
     };
   }
 
@@ -104,6 +109,7 @@ class FoodLog {
       'carbs': carbs,
       'fat': fat,
       'protein': protein,
+      'raw_response': rawResponse,
     };
   }
 
@@ -127,6 +133,7 @@ class FoodLog {
     bool? isShared,
     bool? isSynced,
     DateTime? createdAt,
+    String? rawResponse,
   }) {
     return FoodLog(
       id: id ?? this.id,
@@ -144,6 +151,7 @@ class FoodLog {
       isShared: isShared ?? this.isShared,
       isSynced: isSynced ?? this.isSynced,
       createdAt: createdAt ?? this.createdAt,
+      rawResponse: rawResponse ?? this.rawResponse,
     );
   }
 }

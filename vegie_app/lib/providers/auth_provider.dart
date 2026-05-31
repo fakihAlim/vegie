@@ -196,4 +196,12 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void addLocalCarbonSaved(double amount) {
+    if (_user != null) {
+      _user!.totalCarbonSaved += amount;
+      _authService.saveUser(_user!);
+      notifyListeners();
+    }
+  }
 }
