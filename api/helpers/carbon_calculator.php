@@ -37,7 +37,7 @@ class CarbonCalculator {
         );
 
         foreach ($foodItems as $item) {
-            $name = trim($item['name'] ?? $item['food_name'] ?? '');
+            $name = trim($item['name'] ?? $item['food_name'] ?? $item['nama'] ?? '');
             $weight = (float)($item['weight'] ?? $item['weight_kg'] ?? 0.15); // Default 150g serving
 
             if (empty($name)) {
@@ -62,8 +62,9 @@ class CarbonCalculator {
                 $actualEmission = $weight * $emissionFactor;
 
                 // 3. Calculate Savings:
-                // If category is 'Protein Nabati' or 'Sayuran', it replaces Beef (Daging Sapi) baseline (60.00 kg CO2e/kg)
-                if ($category === 'Protein Nabati' || $category === 'Sayuran') {
+                // Reward all plant-based categories by replacing Beef (Daging Sapi) baseline (60.00 kg CO2e/kg)
+                $plantBasedCategories = ['Protein Nabati', 'Sayuran', 'Karbohidrat', 'Buah'];
+                if (in_array($category, $plantBasedCategories)) {
                     $saving = ($weight * 60.00) - $actualEmission;
                     $totalSavedThisMeal += max(0.00, $saving);
                 }
@@ -76,9 +77,9 @@ class CarbonCalculator {
                 } elseif (strpos($lowerName, 'tempe') !== false) {
                     // Replaces Beef (60.00) with Tempe (1.50)
                     $totalSavedThisMeal += max(0.00, ($weight * 60.00) - ($weight * 1.50));
-                } elseif (strpos($lowerName, 'sayur') !== false || strpos($lowerName, 'bayam') !== false || strpos($lowerName, 'brokoli') !== false || strpos($lowerName, 'kangkung') !== false) {
-                    // Replaces Beef (60.00) with Sayuran (0.50)
-                    $totalSavedThisMeal += max(0.00, ($weight * 60.00) - ($weight * 0.50));
+                } elseif (strpos($lowerName, 'sayur') !== false || strpos($lowerName, 'bayam') !== false || strpos($lowerName, 'brokoli') !== false || strpos($lowerName, 'kangkung') !== false || strpos($lowerName, 'nasi') !== false || strpos($lowerName, 'pisang') !== false) {
+                    // Replaces Beef (60.00) with Sayuran/Carb baseline (1.00)
+                    $totalSavedThisMeal += max(0.00, ($weight * 60.00) - ($weight * 1.00));
                 }
             }
         }

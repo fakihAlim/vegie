@@ -161,12 +161,17 @@ class FoodLogController {
 
         // Calculate carbon saved
         $calculator = new CarbonCalculator($this->db);
-        $foodItems = [
-            [
-                'name' => $foodName,
-                'weight' => 0.15 // Default serving weight 150g = 0.15 kg
-            ]
-        ];
+        $foodItems = [];
+        if ($aiResult && is_array($aiResult) && isset($aiResult['items']) && is_array($aiResult['items'])) {
+            $foodItems = $aiResult['items'];
+        } else {
+            $foodItems = [
+                [
+                    'name' => $foodName,
+                    'weight' => 0.15 // Default serving weight 150g = 0.15 kg
+                ]
+            ];
+        }
         $carbonSavedThisMeal = $calculator->calculateAndSaveCarbon($userId, $foodItems);
 
         // Fetch updated total_carbon_saved
@@ -334,22 +339,25 @@ class FoodLogController {
 
         $points = $this->calculateFoodLogPoints($aiResult['food_name'], $aiResult['items'] ?? null);
 
-        // Update database
-        $stmt = $this->db->prepare(
-            "UPDATE food_logs SET food_name = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ?, ai_provider = ?, ai_response_time = ?, raw_response = ? WHERE id = ?"
-        );
-        $stmt->execute([
-            $aiResult['food_name'],
-            $aiResult['calories'],
-            $aiResult['carbs'],
-            $aiResult['fat'],
-            $aiResult['protein'],
-            $points,
-            $aiResult['ai_provider'] ?? null,
-            $aiResult['ai_response_time'] ?? null,
-            $aiResult['raw_response'] ?? null,
-            $id,
-        ]);
+        // Calculate carbon saved
+        $calculator = new CarbonCalculator($this->db);
+        $foodItems = [];
+        if ($aiResult && is_array($aiResult) && isset($aiResult['items']) && is_array($aiResult['items'])) {
+            $foodItems = $aiResult['items'];
+        } else {
+            $foodItems = [
+                [
+                    'name' => $aiResult['food_name'],
+                    'weight' => 0.15
+                ]
+            ];
+        }
+        $carbonSavedThisMeal = $calculator->calculateAndSaveCarbon($userId, $foodItems);
+
+        // Fetch updated total_carbon_saved
+        $userStmt = $this->db->prepare("SELECT total_carbon_saved FROM users WHERE id = ?");
+        $userStmt->execute([$userId]);
+        $totalCarbonSaved = (float)($userStmt->fetch()['total_carbon_saved'] ?? 0.00);
 
         jsonSuccess([
             'id' => (int) $id,
@@ -363,6 +371,8 @@ class FoodLogController {
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
             'raw_response' => $aiResult['raw_response'] ?? null,
             'ai_response_time' => $aiResult['ai_response_time'] ?? null,
+            'carbon_saved_this_meal' => $carbonSavedThisMeal,
+            'total_carbon_saved' => $totalCarbonSaved,
         ], 'Nutrition analysis completed');
     }
 
@@ -427,9 +437,21 @@ class FoodLogController {
                     $log['nutrition_notes'] ?? null
                 ]);
 
+                $logId = $this->db->lastInsertId();
+
+                // Calculate carbon saved for offline logs during sync
+                $calculator = new CarbonCalculator($this->db);
+                $foodItems = [
+                    [
+                        'name' => $log['food_name'],
+                        'weight' => 0.15
+                    ]
+                ];
+                $calculator->calculateAndSaveCarbon($userId, $foodItems);
+
                 $synced[] = [
                     'local_id' => $log['local_id'] ?? $index,
-                    'server_id' => (int) $this->db->lastInsertId()
+                    'server_id' => (int) $logId
                 ];
             } catch (Exception $e) {
                 $errors[] = "Log #$index: " . $e->getMessage();

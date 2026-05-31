@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:lottie/lottie.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
 import '../../models/badge_model.dart';
@@ -196,6 +197,169 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
     }
   }
 
+  void _showLoadingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return WillPopScope(
+          onWillPop: () async => false, // prevent back button dismissal
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/loading-pins.json',
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Menyimpan & Menganalisis...',
+                    style: TextStyle(
+                      fontSize: 18, 
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'AI sedang menganalisis foto makanan Anda secara detail.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showPointsDialog(BuildContext context, int points) async {
+    final isVegetarian = points == 50;
+    final lottiePath = isVegetarian ? 'assets/lottie/Fifty.json' : 'assets/lottie/20-number-emoji.json';
+    final title = isVegetarian ? 'Luar Biasa! Makanan Nabati' : 'Peringatan Hewani!';
+    final subtitle = isVegetarian ? 'Keren! Anda mendapatkan poin tambahan.' : 'Sayang sekali, poin Anda terdeduksi.';
+    final pointText = isVegetarian ? '+50 Poin' : '-20 Poin';
+    final color = isVegetarian ? AppTheme.success : AppTheme.warning;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                )
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Lottie.asset(
+                  lottiePath,
+                  width: 180,
+                  height: 180,
+                  repeat: isVegetarian,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20, 
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+                  ),
+                  child: Text(
+                    pointText,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Keren!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _save() async {
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -221,6 +385,9 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
+    
+    // Show full screen Lottie loading overlay
+    _showLoadingDialog(context);
 
     final finalDateTime = DateTime(
       _selectedDate.year,
@@ -243,25 +410,35 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       photoPath: _imageFile!.path,
     );
 
-    final newBadges = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
+    final result = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
+    final newBadges = result['badges'] as List<Map<String, dynamic>>? ?? [];
+    final points = result['points'] as int? ?? 0;
 
     setState(() => _isSaving = false);
 
     if (!mounted) return;
 
-    if (newBadges.isNotEmpty || true) {
-      // Refresh AuthProvider profile to update Carbon footprint & points & badge codes
-      await Provider.of<AuthProvider>(context, listen: false).init();
-      // Also refresh the provider's badge list
-      await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
-    }
+    // Pop the loading dialog
+    Navigator.pop(context);
+
+    // Refresh AuthProvider profile to update Carbon footprint & points & badge codes
+    await Provider.of<AuthProvider>(context, listen: false).init();
+    // Also refresh the provider's badge list
+    await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
 
     if (mounted) {
+      // First show the points dialog (+50 or -20)
+      await _showPointsDialog(context, points);
+
+      // Close the AddFoodLogScreen
       Navigator.pop(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Food log berhasil ditambahkan!'),
-          backgroundColor: AppTheme.success,
+        SnackBar(
+          content: Text(points == 50 
+              ? '✅ Food log berhasil ditambahkan! (+50 Poin)' 
+              : '⚠️ Food log berhasil ditambahkan! (-20 Poin)'),
+          backgroundColor: points == 50 ? AppTheme.success : AppTheme.warning,
         ),
       );
 

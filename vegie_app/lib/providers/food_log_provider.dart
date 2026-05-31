@@ -101,9 +101,11 @@ class FoodLogProvider with ChangeNotifier {
     ]);
   }
 
-  /// Add a food log. Returns list of newly-unlocked badges (may be empty).
+  /// Add a food log. Returns a Map containing:
+  ///   - 'badges': List of newly-unlocked badges (may be empty)
+  ///   - 'points': Points awarded for this log (+50 or -20)
   /// The caller (screen) should show BadgeCelebrationDialog for each badge.
-  Future<List<Map<String, dynamic>>> addLog(FoodLog log) async {
+  Future<Map<String, dynamic>> addLog(FoodLog log) async {
     try {
       // First, save locally
       final savedLog = await _foodLogService.addFoodLogLocal(log);
@@ -125,10 +127,18 @@ class FoodLogProvider with ChangeNotifier {
       fetchStreak();
       notifyListeners();
 
-      return newBadges;
+      return {
+        'badges': newBadges,
+        'points': syncedLog.points,
+        'log': syncedLog,
+      };
     } catch (e) {
       print("Error adding log: $e");
-      return [];
+      return {
+        'badges': <Map<String, dynamic>>[],
+        'points': 0,
+        'log': null,
+      };
     }
   }
 
