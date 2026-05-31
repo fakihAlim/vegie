@@ -123,6 +123,7 @@ class SyncService {
       isSynced: true,
       createdAt: log.createdAt,
       rawResponse: data['raw_response'] ?? data['ai_raw_response'] ?? log.rawResponse,
+      points: data['points'] != null ? (data['points'] as num).toInt() : log.points,
     );
     await _localDb.updateFoodLog(updatedLog);
   }

@@ -140,13 +140,16 @@ class FoodLogController {
         $fat = $aiResult['fat'] ?? null;
         $protein = $aiResult['protein'] ?? null;
 
+        // Calculate points
+        $points = $this->calculateFoodLogPoints($foodName, $aiResult ? ($aiResult['items'] ?? null) : null);
+
         $stmt = $this->db->prepare(
-            "INSERT INTO food_logs (user_id, photo, food_name, meal_time, category, nutrition_notes, calories, carbs, fat, protein, ai_provider, ai_response_time, raw_response) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO food_logs (user_id, photo, food_name, meal_time, category, nutrition_notes, calories, carbs, fat, protein, points, ai_provider, ai_response_time, raw_response) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $userId, $photoPath, $foodName, $mealTime, $category, $nutritionNotes, 
-            $calories, $carbs, $fat, $protein,
+            $calories, $carbs, $fat, $protein, $points,
             $aiResult ? ($aiResult['ai_provider'] ?? null) : null,
             $aiResult ? ($aiResult['ai_response_time'] ?? null) : null,
             $aiResult ? ($aiResult['raw_response'] ?? null) : null
@@ -182,6 +185,7 @@ class FoodLogController {
             'carbs' => $carbs,
             'fat' => $fat,
             'protein' => $protein,
+            'points' => (int) $points,
             'ai_provider' => $aiResult['ai_provider'] ?? null,
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
             'raw_response' => $aiResult['raw_response'] ?? null,
@@ -249,10 +253,25 @@ class FoodLogController {
             }
         }
 
+        $items = null;
+        if (!empty($log['raw_response'])) {
+            $parsedJson = json_decode($log['raw_response'], true);
+            if (is_array($parsedJson) && isset($parsedJson['items'])) {
+                $items = $parsedJson['items'];
+            }
+        }
+
+        // Recalculate based purely on name if edited
+        if (strtolower(trim($foodName)) !== strtolower(trim($log['food_name']))) {
+            $items = null;
+        }
+
+        $points = $this->calculateFoodLogPoints($foodName, $items);
+
         $stmt = $this->db->prepare(
-            "UPDATE food_logs SET photo = ?, food_name = ?, meal_time = ?, category = ?, nutrition_notes = ?, calories = ?, carbs = ?, fat = ?, protein = ? WHERE id = ?"
+            "UPDATE food_logs SET photo = ?, food_name = ?, meal_time = ?, category = ?, nutrition_notes = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ? WHERE id = ?"
         );
-        $stmt->execute([$photoPath, $foodName, $mealTime, $category, $nutritionNotes, $calories, $carbs, $fat, $protein, $id]);
+        $stmt->execute([$photoPath, $foodName, $mealTime, $category, $nutritionNotes, $calories, $carbs, $fat, $protein, $points, $id]);
 
         jsonSuccess([
             'id' => (int) $id,
@@ -265,6 +284,7 @@ class FoodLogController {
             'carbs' => $carbs !== null ? (float) $carbs : null,
             'fat' => $fat !== null ? (float) $fat : null,
             'protein' => $protein !== null ? (float) $protein : null,
+            'points' => (int) $points,
         ], 'Food log updated successfully');
     }
 
@@ -306,9 +326,11 @@ class FoodLogController {
             jsonError('AI analysis failed. Please try again later.', 500);
         }
 
+        $points = $this->calculateFoodLogPoints($aiResult['food_name'], $aiResult['items'] ?? null);
+
         // Update database
         $stmt = $this->db->prepare(
-            "UPDATE food_logs SET food_name = ?, calories = ?, carbs = ?, fat = ?, protein = ?, ai_provider = ?, ai_response_time = ?, raw_response = ? WHERE id = ?"
+            "UPDATE food_logs SET food_name = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ?, ai_provider = ?, ai_response_time = ?, raw_response = ? WHERE id = ?"
         );
         $stmt->execute([
             $aiResult['food_name'],
@@ -316,6 +338,7 @@ class FoodLogController {
             $aiResult['carbs'],
             $aiResult['fat'],
             $aiResult['protein'],
+            $points,
             $aiResult['ai_provider'] ?? null,
             $aiResult['ai_response_time'] ?? null,
             $aiResult['raw_response'] ?? null,
@@ -329,6 +352,7 @@ class FoodLogController {
             'carbs' => $aiResult['carbs'],
             'fat' => $aiResult['fat'],
             'protein' => $aiResult['protein'],
+            'points' => (int) $points,
             'ai_provider' => $aiResult['ai_provider'] ?? null,
             'ai_raw_response' => $aiResult['raw_response'] ?? null,
             'raw_response' => $aiResult['raw_response'] ?? null,
@@ -497,6 +521,59 @@ class FoodLogController {
     /**
      * Format a food log record for API response
      */
+    /**
+     * Calculate points for a food log:
+     * purely plant-based (nabati) = 50 pts, contains animal products (hewani) = -20 pts.
+     */
+    private function calculateFoodLogPoints($foodName, $items) {
+        $hasHewani = false;
+        
+        $namesToCheck = [];
+        if (!empty($foodName)) {
+            $namesToCheck[] = trim($foodName);
+        }
+        if (is_array($items)) {
+            foreach ($items as $item) {
+                if (isset($item['nama'])) {
+                    $namesToCheck[] = trim($item['nama']);
+                }
+            }
+        }
+        
+        foreach ($namesToCheck as $name) {
+            // Check in database emission_factors category
+            $stmt = $this->db->prepare("
+                SELECT category FROM emission_factors 
+                WHERE LOWER(?) LIKE CONCAT('%', LOWER(food_name), '%') 
+                   OR LOWER(food_name) LIKE CONCAT('%', LOWER(?), '%')
+            ");
+            $stmt->execute([$name, $name]);
+            $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            foreach ($results as $cat) {
+                if (strtolower(trim($cat)) === 'protein hewani') {
+                    $hasHewani = true;
+                    break 2;
+                }
+            }
+            
+            // Standard Indonesian & English hewani keywords fallback
+            $hewaniKeywords = [
+                'ayam', 'daging', 'sapi', 'ikan', 'telur', 'susu', 'babi', 'kambing', 'udang', 
+                'cumi', 'kepiting', 'keju', 'mentega', 'egg', 'chicken', 'beef', 'fish', 'pork', 
+                'milk', 'cheese', 'butter'
+            ];
+            foreach ($hewaniKeywords as $kw) {
+                if (strpos(strtolower($name), $kw) !== false) {
+                    $hasHewani = true;
+                    break 2;
+                }
+            }
+        }
+        
+        return $hasHewani ? -20 : 50;
+    }
+
     private function formatLog($log) {
         return [
             'id' => (int) $log['id'],
@@ -509,6 +586,7 @@ class FoodLogController {
             'carbs' => $log['carbs'] !== null ? (float) $log['carbs'] : null,
             'fat' => $log['fat'] !== null ? (float) $log['fat'] : null,
             'protein' => $log['protein'] !== null ? (float) $log['protein'] : null,
+            'points' => isset($log['points']) ? (int) $log['points'] : 0,
             'is_shared' => isset($log['is_shared']) ? (bool) $log['is_shared'] : false,
             'created_at' => $log['created_at'],
             'raw_response' => $log['raw_response'] ?? null,

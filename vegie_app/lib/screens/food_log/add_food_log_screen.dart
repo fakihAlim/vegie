@@ -7,6 +7,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
 import '../../services/activity_log_service.dart';
 
@@ -245,6 +246,9 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
     setState(() => _isSaving = false);
 
     if (success && mounted) {
+      // Refresh AuthProvider profile to update Carbon footprint & points
+      Provider.of<AuthProvider>(context, listen: false).init();
+      
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

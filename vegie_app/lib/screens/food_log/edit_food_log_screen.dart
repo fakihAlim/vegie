@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
 import '../../services/activity_log_service.dart';
 
@@ -75,6 +76,9 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
     setState(() => _isSaving = false);
     
     if (success && mounted) {
+      // Refresh AuthProvider profile to update Carbon footprint & points
+      Provider.of<AuthProvider>(context, listen: false).init();
+
       ActivityLogService.instance.logEvent('food_log_edit', extraData: {
         'food_log_id': widget.log.id,
       });

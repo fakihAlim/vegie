@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
+import '../../providers/group_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
 import '../../services/activity_log_service.dart';
@@ -46,12 +47,15 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.sync),
-            onPressed: () {
-              Provider.of<FoodLogProvider>(context, listen: false).forceSync();
-              ActivityLogService.instance.logEvent('sync_manual');
+            onPressed: () async {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Syncing data...')),
               );
+              await Provider.of<FoodLogProvider>(context, listen: false).forceSync();
+              if (context.mounted) {
+                Provider.of<AuthProvider>(context, listen: false).init();
+              }
+              ActivityLogService.instance.logEvent('sync_manual');
             },
           ),
         ],
@@ -63,7 +67,12 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           }
           
           return RefreshIndicator(
-            onRefresh: provider.forceSync,
+            onRefresh: () async {
+              await provider.forceSync();
+              if (context.mounted) {
+                Provider.of<AuthProvider>(context, listen: false).init();
+              }
+            },
             color: AppTheme.primary,
             child: CustomScrollView(
               slivers: [
@@ -329,6 +338,9 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                     final provider = Provider.of<FoodLogProvider>(context, listen: false);
                                     final success = await provider.toggleShareLog(log);
                                     if (success) {
+                                      // Refresh Discover Feed in background
+                                      Provider.of<GroupProvider>(context, listen: false).fetchDiscoverFeed();
+                                      
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(log.isShared 
@@ -360,6 +372,8 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                           Row(
                             children: [
                               _buildCategoryPill(log.category),
+                              const SizedBox(width: 8),
+                              _buildPointsBadge(log.points),
                               const SizedBox(width: 8),
                               Icon(Icons.circle, size: 4, color: Colors.grey.shade400),
                               const SizedBox(width: 8),
@@ -627,6 +641,40 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
       child: Text(
         category.toUpperCase(),
         style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+      ),
+    );
+  }
+
+  Widget _buildPointsBadge(int points) {
+    final isPositive = points >= 0;
+    final color = isPositive ? AppTheme.success : AppTheme.error;
+    final text = isPositive ? '+$points pts' : '$points pts';
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

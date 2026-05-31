@@ -15,6 +15,7 @@ class FoodLog {
   final bool isSynced;
   final DateTime createdAt;
   final String? rawResponse; // Local and server cached full raw AI response
+  final int points; // Points awarded for this food log
 
   FoodLog({
     this.id,
@@ -33,6 +34,7 @@ class FoodLog {
     this.isSynced = true,
     DateTime? createdAt,
     this.rawResponse,
+    this.points = 0,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory FoodLog.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class FoodLog {
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       rawResponse: json['raw_response'] ?? json['ai_raw_response'],
+      points: json['points'] != null ? (json['points'] as num).toInt() : 0,
     );
   }
 
@@ -74,6 +77,7 @@ class FoodLog {
       isSynced: map['is_synced'] == 1,
       createdAt: DateTime.parse(map['created_at']),
       rawResponse: map['raw_response'],
+      points: map['points'] != null ? (map['points'] as num).toInt() : 0,
     );
   }
 
@@ -95,6 +99,7 @@ class FoodLog {
       'is_synced': isSynced ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'raw_response': rawResponse,
+      'points': points,
     };
   }
 
@@ -110,6 +115,7 @@ class FoodLog {
       'fat': fat,
       'protein': protein,
       'raw_response': rawResponse,
+      'points': points,
     };
   }
 
@@ -134,6 +140,7 @@ class FoodLog {
     bool? isSynced,
     DateTime? createdAt,
     String? rawResponse,
+    int? points,
   }) {
     return FoodLog(
       id: id ?? this.id,
@@ -152,6 +159,7 @@ class FoodLog {
       isSynced: isSynced ?? this.isSynced,
       createdAt: createdAt ?? this.createdAt,
       rawResponse: rawResponse ?? this.rawResponse,
+      points: points ?? this.points,
     );
   }
 }

@@ -378,6 +378,7 @@ class AuthController {
     }
 
     private function getUserTotalPoints($userId) {
+        // Points from Quizzes
         $stmt = $this->db->prepare(
             "SELECT COALESCE(SUM(q.points), 0) as total_points
              FROM user_quizzes uq
@@ -385,7 +386,17 @@ class AuthController {
              WHERE uq.user_id = ? AND uq.is_correct = 1"
         );
         $stmt->execute([$userId]);
-        $data = $stmt->fetch();
-        return (int) ($data['total_points'] ?? 0);
+        $quizPoints = (int) ($stmt->fetch()['total_points'] ?? 0);
+
+        // Points from Food Logs
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(points), 0) as total_points
+             FROM food_logs
+             WHERE user_id = ?"
+        );
+        $stmt->execute([$userId]);
+        $foodLogPoints = (int) ($stmt->fetch()['total_points'] ?? 0);
+
+        return $quizPoints + $foodLogPoints;
     }
 }
