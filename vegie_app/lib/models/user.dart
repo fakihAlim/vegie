@@ -4,6 +4,9 @@ class User {
   final String email;
   final String? photo;
   final String? bio;
+  final int? age;
+  final double? weight;
+  final double? height;
   final String joinDate;
   final Map<String, int>? stats;
   final bool isOnboardingCompleted;
@@ -18,6 +21,9 @@ class User {
     required this.email,
     this.photo,
     this.bio,
+    this.age,
+    this.weight,
+    this.height,
     required this.joinDate,
     this.stats,
     this.isOnboardingCompleted = false,
@@ -34,6 +40,9 @@ class User {
       email: json['email'],
       photo: json['photo'],
       bio: json['bio'],
+      age: json['age'] != null ? (json['age'] as num).toInt() : null,
+      weight: json['weight'] != null ? (json['weight'] as num).toDouble() : null,
+      height: json['height'] != null ? (json['height'] as num).toDouble() : null,
       joinDate: json['join_date'],
       stats: json['stats'] != null 
           ? Map<String, int>.from(json['stats']) 
@@ -55,6 +64,9 @@ class User {
       'email': email,
       'photo': photo,
       'bio': bio,
+      'age': age,
+      'weight': weight,
+      'height': height,
       'join_date': joinDate,
       'stats': stats,
       'is_onboarding_completed': isOnboardingCompleted,
@@ -71,6 +83,9 @@ class User {
     String? email,
     String? photo,
     String? bio,
+    int? age,
+    double? weight,
+    double? height,
     String? joinDate,
     Map<String, int>? stats,
     bool? isOnboardingCompleted,
@@ -85,6 +100,9 @@ class User {
       email: email ?? this.email,
       photo: photo ?? this.photo,
       bio: bio ?? this.bio,
+      age: age ?? this.age,
+      weight: weight ?? this.weight,
+      height: height ?? this.height,
       joinDate: joinDate ?? this.joinDate,
       stats: stats ?? this.stats,
       isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,

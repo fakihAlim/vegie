@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/auth_provider.dart';
 import '../../config/theme.dart';
 import '../../services/streak_service.dart';
+import '../../models/user.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   void _logout(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.logout();
@@ -53,6 +60,111 @@ class ProfileScreen extends StatelessWidget {
     },
   ];
 
+  Widget _buildAvatarWidget(String? photo, String name, {double size = 110}) {
+    if (photo != null && photo.isNotEmpty) {
+      if (photo.startsWith('http')) {
+        return CachedNetworkImage(
+          imageUrl: photo,
+          imageBuilder: (context, imageProvider) => Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+            ),
+          ),
+          placeholder: (context, url) => SizedBox(
+            width: size,
+            height: size,
+            child: const CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+          ),
+          errorWidget: (context, url, error) => _buildDefaultAvatar(name, size),
+        );
+      } else {
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            border: Border.all(color: AppTheme.primary.withOpacity(0.1), width: 1.5),
+            image: DecorationImage(
+              image: AssetImage('assets/images/avatars/$photo'),
+              fit: BoxFit.contain,
+            ),
+          ),
+        );
+      }
+    }
+    return _buildDefaultAvatar(name, size);
+  }
+
+  Widget _buildDefaultAvatar(String name, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppTheme.primaryLight,
+      ),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'U',
+          style: TextStyle(fontSize: size * 0.38, color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileDetailCard(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          )
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: AppTheme.primary),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context, User user) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _EditProfileSheet(user: user),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
@@ -84,33 +196,52 @@ class ProfileScreen extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primaryLight,
-                        border: Border.all(color: Colors.white, width: 4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.15),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          )
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          user.name.isNotEmpty ? user.name.substring(0, 1).toUpperCase() : 'U',
-                          style: const TextStyle(fontSize: 42, color: Colors.white, fontWeight: FontWeight.bold),
+                    Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withOpacity(0.15),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              )
+                            ],
+                          ),
+                          child: _buildAvatarWidget(user.photo, user.name),
                         ),
-                      ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: () => _showEditProfileSheet(context, user),
+                            child: const CircleAvatar(
+                              radius: 18,
+                              backgroundColor: AppTheme.primary,
+                              child: Icon(Icons.edit_rounded, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Text(
                       user.name,
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                     ),
+                    if (user.bio != null && user.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          user.bio!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       user.email,
@@ -118,7 +249,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     
-                    // 2. TTM Stage Badge Gelar persis di bawah nama
+                    // TTM Stage Badge
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
@@ -145,9 +276,28 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               
-              // 3. Gamification Stats Row (Left: Points, Right: Streak via FutureBuilder)
+              // 2. Profile Details Grid (Usia, TB, BB)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: _buildProfileDetailCard('Usia', user.age != null ? '${user.age} thn' : '-', Icons.cake_rounded),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildProfileDetailCard('Tinggi', user.height != null ? '${user.height!.round()} cm' : '-', Icons.height_rounded),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildProfileDetailCard('Berat', user.weight != null ? '${user.weight!.round()} kg' : '-', Icons.monitor_weight_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // 3. Gamification Stats Row
               FutureBuilder<Map<String, dynamic>>(
                 future: StreakService().getStreak(),
                 builder: (context, snapshot) {
@@ -370,6 +520,294 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditProfileSheet extends StatefulWidget {
+  final User user;
+  const _EditProfileSheet({Key? key, required this.user}) : super(key: key);
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _bioController;
+  late final TextEditingController _ageController;
+  late final TextEditingController _weightController;
+  late final TextEditingController _heightController;
+  
+  String? _selectedAvatar;
+  bool _isSaving = false;
+
+  final List<String> _avatars = [
+    'daffodil.png',
+    'flower (1).png',
+    'flower (2).png',
+    'flower.png',
+    'iris.png',
+    'mexican-aster.png',
+    'pink-cosmos.png',
+    'sakura.png',
+    'sunflower (1).png',
+    'sunflower.png',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.user.name);
+    _bioController = TextEditingController(text: widget.user.bio);
+    _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
+    _weightController = TextEditingController(text: widget.user.weight?.round().toString() ?? '');
+    _heightController = TextEditingController(text: widget.user.height?.round().toString() ?? '');
+    
+    // Check if the current photo is one of the presets
+    final currentPhoto = widget.user.photo;
+    if (currentPhoto != null && !currentPhoto.startsWith('http')) {
+      _selectedAvatar = currentPhoto;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama tidak boleh kosong!'), backgroundColor: AppTheme.error),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+    bool success = await authProvider.updateProfile(
+      name: _nameController.text.trim(),
+      bio: _bioController.text.trim(),
+      age: int.tryParse(_ageController.text.trim()),
+      weight: double.tryParse(_weightController.text.trim()),
+      height: double.tryParse(_heightController.text.trim()),
+      photo: _selectedAvatar,
+    );
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profil berhasil diperbarui! 💖'),
+          backgroundColor: AppTheme.primary,
+        ),
+      );
+      Navigator.of(context).pop();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memperbarui profil. Coba lagi.'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Slide indicator
+            Center(
+              child: Container(
+                width: 48,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Edit Profil & Data Diri',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Sesuaikan avatar bunga terindahmu dan ubah info fisikmu kapan saja.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 24),
+            
+            // Avatar Row Selector
+            const Text(
+              'Pilih Karakter Avatar',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _avatars.length,
+                itemBuilder: (context, index) {
+                  final avatar = _avatars[index];
+                  final isSelected = _selectedAvatar == avatar;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedAvatar = avatar;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected ? AppTheme.primaryLight.withOpacity(0.15) : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected ? AppTheme.primary : Colors.grey.shade200,
+                          width: isSelected ? 3.0 : 1.5,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.white,
+                        backgroundImage: AssetImage('assets/images/avatars/$avatar'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Form inputs
+            _buildInputField(controller: _nameController, label: 'Nama Lengkap', icon: Icons.person_outline_rounded),
+            const SizedBox(height: 16),
+            _buildInputField(controller: _bioController, label: 'Slogan / Bio', icon: Icons.chat_bubble_outline_rounded),
+            const SizedBox(height: 16),
+            
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _ageController, 
+                    label: 'Usia (Thn)', 
+                    icon: Icons.cake_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _heightController, 
+                    label: 'Tinggi (cm)', 
+                    icon: Icons.height_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _weightController, 
+                    label: 'Berat (kg)', 
+                    icon: Icons.monitor_weight_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            
+            ElevatedButton(
+              onPressed: _isSaving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+              ),
+              child: _isSaving 
+                ? const SizedBox(
+                    height: 20, 
+                    width: 20, 
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppTheme.primary, size: 20),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

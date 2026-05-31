@@ -206,8 +206,12 @@ $quizzesList = $stmt->fetchAll();
 <script>
 function showAiLoading() {
     document.getElementById('ai-loading').style.display = 'block';
-    document.getElementById('btn-ai-gen').disabled = true;
     document.getElementById('btn-ai-gen').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 6px;"></span>Menghubungi AI...';
+    
+    // Defer disabling the button so the browser has time to dispatch the form submit
+    setTimeout(function() {
+        document.getElementById('btn-ai-gen').disabled = true;
+    }, 50);
 }
 </script>
 

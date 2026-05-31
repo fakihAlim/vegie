@@ -114,15 +114,71 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> submitOnboardingStage(String stage) async {
+  Future<bool> submitOnboardingStage({
+    required String stage,
+    required int age,
+    required double weight,
+    required double height,
+    required String photo,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
-    bool success = await _authService.submitOnboardingStage(stage);
+    bool success = await _authService.submitOnboardingStage(
+      stage: stage,
+      age: age,
+      weight: weight,
+      height: height,
+      photo: photo,
+    );
+    
+    if (success && _user != null) {
+      _user = _user!.copyWith(
+        isOnboardingCompleted: true,
+        ttmStage: stage.toLowerCase(),
+        age: age,
+        weight: weight,
+        height: height,
+        photo: photo,
+      );
+      await _authService.saveUser(_user!);
+    }
     
     _isLoading = false;
     notifyListeners();
     return success;
+  }
+
+  Future<bool> updateProfile({
+    String? name,
+    String? bio,
+    int? age,
+    double? weight,
+    double? height,
+    String? photo,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final updatedUser = await _authService.updateProfile(
+      name: name,
+      bio: bio,
+      age: age,
+      weight: weight,
+      height: height,
+      photo: photo,
+    );
+
+    if (updatedUser != null) {
+      _user = updatedUser;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   void updateTtmState(String stage, bool isLocked) {

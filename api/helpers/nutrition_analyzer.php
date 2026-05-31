@@ -194,7 +194,7 @@ function analyzeWithGemini($base64) {
         return null;
     }
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=" . GEMINI_API_KEY;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . GEMINI_API_KEY;
 
     $prompt = 'You are a nutrition analysis API. Identify the food in this image. '
         . 'Return ONLY a valid raw JSON object with exactly these keys: '

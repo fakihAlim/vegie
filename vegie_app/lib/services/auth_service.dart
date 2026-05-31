@@ -114,16 +114,62 @@ class AuthService {
     return prefs.containsKey(Constants.keyToken);
   }
 
-  Future<bool> submitOnboardingStage(String stage) async {
+  Future<bool> submitOnboardingStage({
+    required String stage,
+    required int age,
+    required double weight,
+    required double height,
+    required String photo,
+  }) async {
     try {
       final response = await _apiService.post(
         Constants.endpointOnboarding,
-        {'stage': stage},
+        {
+          'stage': stage,
+          'age': age,
+          'weight': weight,
+          'height': height,
+          'photo': photo,
+        },
       );
       return response['success'] == true;
     } catch (e) {
       print("Submit onboarding error: $e");
       return false;
     }
+  }
+
+  Future<User?> updateProfile({
+    String? name,
+    String? bio,
+    int? age,
+    double? weight,
+    double? height,
+    String? photo,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {};
+      if (name != null) data['name'] = name;
+      if (bio != null) data['bio'] = bio;
+      if (age != null) data['age'] = age;
+      if (weight != null) data['weight'] = weight;
+      if (height != null) data['height'] = height;
+      if (photo != null) data['photo'] = photo;
+
+      final response = await _apiService.post(
+        Constants.endpointProfile,
+        data,
+      );
+
+      if (response['success'] == true) {
+        final userData = response['data'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(Constants.keyUser, jsonEncode(userData));
+        return User.fromJson(userData);
+      }
+    } catch (e) {
+      print("Update profile error: $e");
+    }
+    return null;
   }
 }

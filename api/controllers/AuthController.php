@@ -69,6 +69,9 @@ class AuthController {
                 'email' => $email,
                 'photo' => null,
                 'bio' => null,
+                'age' => null,
+                'weight' => null,
+                'height' => null,
                 'join_date' => $joinDate,
                 'is_onboarding_completed' => false,
                 'ttm_stage' => $progress['stage'],
@@ -113,8 +116,11 @@ class AuthController {
                 'id' => (int) $user['id'],
                 'name' => $user['name'],
                 'email' => $user['email'],
-                'photo' => $user['photo'] ? getUploadUrl($user['photo']) : null,
+                'photo' => $user['photo'] ? (strpos($user['photo'], 'uploads/') === 0 ? getUploadUrl($user['photo']) : $user['photo']) : null,
                 'bio' => $user['bio'],
+                'age' => $user['age'] !== null ? (int)$user['age'] : null,
+                'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
+                'height' => $user['height'] !== null ? (float)$user['height'] : null,
                 'join_date' => $user['join_date'],
                 'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
                 'ttm_stage' => $progress['stage'],
@@ -132,7 +138,7 @@ class AuthController {
         $userId = $auth['user_id'];
 
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -157,8 +163,11 @@ class AuthController {
             'id' => (int) $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'photo' => $user['photo'] ? getUploadUrl($user['photo']) : null,
+            'photo' => $user['photo'] ? (strpos($user['photo'], 'uploads/') === 0 ? getUploadUrl($user['photo']) : $user['photo']) : null,
             'bio' => $user['bio'],
+            'age' => $user['age'] !== null ? (int)$user['age'] : null,
+            'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
+            'height' => $user['height'] !== null ? (float)$user['height'] : null,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],
@@ -181,13 +190,21 @@ class AuthController {
         // Handle both JSON body and form-data (for photo upload)
         $name = $_POST['name'] ?? null;
         $bio = $_POST['bio'] ?? null;
+        $age = $_POST['age'] ?? null;
+        $weight = $_POST['weight'] ?? null;
+        $height = $_POST['height'] ?? null;
+        $presetPhoto = $_POST['photo'] ?? null;
         $photoPath = null;
 
         // If no POST data, try JSON body
-        if (!$name) {
+        if (!$name && !$age && !$weight && !$height && !$presetPhoto) {
             $data = getJsonBody();
             $name = $data['name'] ?? null;
             $bio = $data['bio'] ?? null;
+            $age = $data['age'] ?? null;
+            $weight = $data['weight'] ?? null;
+            $height = $data['height'] ?? null;
+            $presetPhoto = $data['photo'] ?? null;
         }
 
         // Handle photo upload
@@ -201,9 +218,11 @@ class AuthController {
             $stmt = $this->db->prepare("SELECT photo FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $oldUser = $stmt->fetch();
-            if ($oldUser && $oldUser['photo']) {
+            if ($oldUser && $oldUser['photo'] && strpos($oldUser['photo'], 'uploads/') === 0) {
                 deleteUploadedFile($oldUser['photo']);
             }
+        } elseif ($presetPhoto !== null) {
+            $photoPath = trim($presetPhoto);
         }
 
         // Build update query dynamically
@@ -218,7 +237,19 @@ class AuthController {
             $updates[] = "bio = ?";
             $params[] = trim($bio);
         }
-        if ($photoPath) {
+        if ($age !== null) {
+            $updates[] = "age = ?";
+            $params[] = (int)$age;
+        }
+        if ($weight !== null) {
+            $updates[] = "weight = ?";
+            $params[] = (float)$weight;
+        }
+        if ($height !== null) {
+            $updates[] = "height = ?";
+            $params[] = (float)$height;
+        }
+        if ($photoPath !== null) {
             $updates[] = "photo = ?";
             $params[] = $photoPath;
         }
@@ -234,7 +265,7 @@ class AuthController {
 
         // Return updated profile
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, join_date, is_onboarding_completed FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, join_date, is_onboarding_completed FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -246,8 +277,11 @@ class AuthController {
             'id' => (int) $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'photo' => $user['photo'] ? getUploadUrl($user['photo']) : null,
+            'photo' => $user['photo'] ? (strpos($user['photo'], 'uploads/') === 0 ? getUploadUrl($user['photo']) : $user['photo']) : null,
             'bio' => $user['bio'],
+            'age' => $user['age'] !== null ? (int)$user['age'] : null,
+            'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
+            'height' => $user['height'] !== null ? (float)$user['height'] : null,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
             'ttm_stage' => $progress['stage'],
@@ -309,10 +343,32 @@ class AuthController {
             jsonError('Invalid stage', 422);
         }
 
+        $age = isset($data['age']) ? (int)$data['age'] : null;
+        $weight = isset($data['weight']) ? (float)$data['weight'] : null;
+        $height = isset($data['height']) ? (float)$data['height'] : null;
+        $photo = isset($data['photo']) ? trim($data['photo']) : null;
+
+        $ttmStage = strtolower($stage);
+        $actionStartDate = null;
+        if ($ttmStage === 'action') {
+            $actionStartDate = date('Y-m-d');
+        } elseif ($ttmStage === 'maintenance') {
+            $actionStartDate = date('Y-m-d', strtotime('-6 months'));
+        }
+
         $stmt = $this->db->prepare(
-            "UPDATE users SET is_onboarding_completed = 1, current_stage = ? WHERE id = ?"
+            "UPDATE users SET 
+                is_onboarding_completed = 1, 
+                current_stage = ?, 
+                ttm_stage = ?,
+                ttm_action_start_date = ?,
+                age = ?, 
+                weight = ?, 
+                height = ?, 
+                photo = ? 
+             WHERE id = ?"
         );
-        $stmt->execute([$stage, $userId]);
+        $stmt->execute([$stage, $ttmStage, $actionStartDate, $age, $weight, $height, $photo, $userId]);
 
         jsonSuccess(null, 'Onboarding completed successfully');
     }
