@@ -72,22 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddFoodLogScreen()),
-          );
-        },
-        backgroundColor: AppTheme.primary,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
         color: AppTheme.surface,
         elevation: 10,
         child: SizedBox(
@@ -107,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 activeIcon: Icons.lightbulb,
                 label: 'Insights',
               ),
-              const SizedBox(width: 48), // Ruang kosong untuk FAB
+              _buildCameraTabItem(),
               _buildTabItem(
                 index: 2,
                 icon: isLocked ? Icons.lock_outline : Icons.explore_outlined,
@@ -124,6 +109,37 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCameraTabItem() {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddFoodLogScreen()),
+        );
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(
+            Icons.camera_alt_outlined,
+            color: AppTheme.textSecondary,
+            size: 24,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Log',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
   }

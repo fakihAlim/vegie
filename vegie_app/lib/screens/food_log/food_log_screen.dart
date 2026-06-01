@@ -79,7 +79,6 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                 SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      _buildHeaderStats(provider.streak),
                       MonthCalendar(
                         selectedDate: provider.selectedDate,
                         onDateSelected: provider.selectDate,
