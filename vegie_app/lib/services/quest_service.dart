@@ -1,7 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../config/constants.dart';
-import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class Quest {
   final int userQuestId;
@@ -42,42 +39,33 @@ class Quest {
 }
 
 class QuestService {
-  Future<List<Quest>> getDailyQuests() async {
-    final token = await AuthService.instance.getToken();
-    final response = await http.get(
-      Uri.parse('${Constants.apiBaseUrl}/quests'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+  final ApiService _apiService = ApiService();
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        final List<dynamic> items = data['data'];
+  Future<List<Quest>> getDailyQuests() async {
+    try {
+      final response = await _apiService.get('/quests', requireAuth: true);
+      if (response['success'] == true) {
+        final List<dynamic> items = response['data'];
         return items.map((json) => Quest.fromJson(json)).toList();
       }
+    } catch (e) {
+      print('Error fetching quests: $e');
     }
     throw Exception('Failed to load quests');
   }
 
   Future<bool> updateProgress(String questType) async {
-    final token = await AuthService.instance.getToken();
-    final response = await http.post(
-      Uri.parse('${Constants.apiBaseUrl}/quests/progress'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'quest_type': questType}),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        return data['data']['updated'] ?? false;
+    try {
+      final response = await _apiService.post(
+        '/quests/progress',
+        {'quest_type': questType},
+        requireAuth: true,
+      );
+      if (response['success'] == true) {
+        return response['data']['updated'] ?? false;
       }
+    } catch (e) {
+      print('Error updating quest progress: $e');
     }
     return false;
   }

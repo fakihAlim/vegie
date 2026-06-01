@@ -4,6 +4,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/constants.dart';
 
 class ApiService {
+  // --- OPTIMASI: Cache Token di RAM (Menghindari Disk I/O berulang) ---
+  static String? _cachedToken;
+  static bool _isTokenLoaded = false;
+
+  Future<void> _loadToken() async {
+    if (!_isTokenLoaded) {
+      final prefs = await SharedPreferences.getInstance();
+      _cachedToken = prefs.getString(Constants.keyToken);
+      _isTokenLoaded = true;
+    }
+  }
+
+  /// Panggil fungsi ini jika User Logout agar cache token dibersihkan
+  static void clearTokenCache() {
+    _cachedToken = null;
+    _isTokenLoaded = false;
+  }
+  // -------------------------------------------------------------------
+
   Future<Map<String, String>> _getHeaders({bool requireAuth = true}) async {
     final headers = {
       'Content-Type': 'application/json',
@@ -11,10 +30,9 @@ class ApiService {
     };
 
     if (requireAuth) {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(Constants.keyToken);
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
+      await _loadToken(); // Cepat karena hanya baca dari memory jika sudah diload
+      if (_cachedToken != null) {
+        headers['Authorization'] = 'Bearer $_cachedToken';
       }
     }
 

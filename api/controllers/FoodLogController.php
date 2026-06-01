@@ -2,8 +2,7 @@
 /**
  * Food Log Controller
  * LovingHarmony API
- * 
- * Handles: CRUD for food logs + bulk sync + AI nutrition analysis
+ * * Handles: CRUD for food logs + bulk sync + AI nutrition analysis
  */
 
 class FoodLogController {
@@ -570,61 +569,85 @@ class FoodLogController {
     }
 
     /**
-     * Format a food log record for API response
-     */
-    /**
      * Calculate points for a food log:
      * purely plant-based (nabati) = 50 pts, contains animal products (hewani) = -20 pts.
+     * OPTIMIZED VER.
      */
     private function calculateFoodLogPoints($foodName, $items) {
-        $hasHewani = false;
-        
         $namesToCheck = [];
+        
         if (!empty($foodName)) {
-            $namesToCheck[] = trim($foodName);
+            $namesToCheck[] = strtolower(trim($foodName));
         }
+        
         if (is_array($items)) {
             foreach ($items as $item) {
                 if (isset($item['nama'])) {
-                    $namesToCheck[] = trim($item['nama']);
+                    $namesToCheck[] = strtolower(trim($item['nama']));
                 }
             }
         }
+        
+        // Hapus nama ganda untuk menghemat iterasi
+        $namesToCheck = array_unique($namesToCheck);
+        
+        if (empty($namesToCheck)) {
+            return 50; 
+        }
+
+        // 1. CEK LOKAL (IN-MEMORY) TERLEBIH DAHULU
+        // Ini akan sangat memangkas proses dan query ke DB.
+        $hewaniKeywords = [
+            'ayam', 'daging', 'sapi', 'ikan', 'telur', 'susu', 'babi', 'kambing', 'udang', 
+            'cumi', 'kepiting', 'keju', 'mentega', 'egg', 'chicken', 'beef', 'fish', 'pork', 
+            'milk', 'cheese', 'butter'
+        ];
         
         foreach ($namesToCheck as $name) {
-            // Check in database emission_factors category
-            $stmt = $this->db->prepare("
-                SELECT category FROM emission_factors 
-                WHERE LOWER(?) LIKE CONCAT('%', LOWER(food_name), '%') 
-                   OR LOWER(food_name) LIKE CONCAT('%', LOWER(?), '%')
-            ");
-            $stmt->execute([$name, $name]);
-            $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            
-            foreach ($results as $cat) {
-                if (strtolower(trim($cat)) === 'protein hewani') {
-                    $hasHewani = true;
-                    break 2;
-                }
-            }
-            
-            // Standard Indonesian & English hewani keywords fallback
-            $hewaniKeywords = [
-                'ayam', 'daging', 'sapi', 'ikan', 'telur', 'susu', 'babi', 'kambing', 'udang', 
-                'cumi', 'kepiting', 'keju', 'mentega', 'egg', 'chicken', 'beef', 'fish', 'pork', 
-                'milk', 'cheese', 'butter'
-            ];
             foreach ($hewaniKeywords as $kw) {
-                if (strpos(strtolower($name), $kw) !== false) {
-                    $hasHewani = true;
-                    break 2;
+                if (strpos($name, $kw) !== false) {
+                    return -20; // Langsung potong poin jika ketemu keyword
                 }
             }
         }
+
+        // 2. CEK DATABASE (SATU KALI QUERY SAJA)
+        $conditions = [];
+        $params = [];
         
-        return $hasHewani ? -20 : 50;
+        foreach ($namesToCheck as $name) {
+            // Jika di-desain baru, ini cocok diganti dengan MATCH() AGAINST().
+            // Karena ini optimalisasi kode eksisting tanpa ubah skema DB:
+            $conditions[] = "(LOWER(food_name) LIKE CONCAT('%', ?, '%') OR ? LIKE CONCAT('%', LOWER(food_name), '%'))";
+            $params[] = $name;
+            $params[] = $name;
+        }
+
+        $whereClause = implode(' OR ', $conditions);
+
+        // Hanya cari data dengan kategori 'protein hewani' agar proses sorting dilakukan di tingkat SQL
+        $sql = "
+            SELECT 1 FROM emission_factors 
+            WHERE LOWER(category) = 'protein hewani' 
+              AND ($whereClause)
+            LIMIT 1
+        ";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        // Cek apakah ada record yang matching
+        if ($stmt->fetchColumn()) {
+            return -20;
+        }
+        
+        // Jika tidak ada di lokal dan database, berarti murni nabati
+        return 50;
     }
 
+    /**
+     * Format a food log record for API response
+     */
     private function formatLog($log) {
         return [
             'id' => (int) $log['id'],

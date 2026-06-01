@@ -1,0 +1,22 @@
+import 'package:flutter/material.dart';
+import '../news/news_screen.dart';
+import '../../config/theme.dart';
+
+class QuizScreen extends StatelessWidget {
+  final int quizId;
+  const QuizScreen({Key? key, required this.quizId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Kuis Harian', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: DailyQuizCard(),
+      ),
+    );
+  }
+}

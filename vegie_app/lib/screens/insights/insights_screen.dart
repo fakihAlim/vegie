@@ -32,7 +32,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       }
       
       final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
-      if (recipeProvider.recipes.isEmpty) {
+      if (recipeProvider.recipesList.isEmpty) {
         recipeProvider.fetchRecipes(refresh: true);
       }
     });
@@ -244,7 +244,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => NewsDetailScreen(newsId: news.id!)),
+          MaterialPageRoute(builder: (_) => NewsDetailScreen(news: news)),
         );
       },
       child: Container(
@@ -263,7 +263,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: CachedNetworkImage(
-                imageUrl: news.imageUrl,
+                imageUrl: news.image ?? '',
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -284,7 +284,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    news.source,
+                    news.publishedAt.toString().split(' ')[0],
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
@@ -299,11 +299,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Widget _buildRecipeSection() {
     return Consumer<RecipeProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading && provider.recipes.isEmpty) {
+        if (provider.isLoading && provider.recipesList.isEmpty) {
           return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
         }
 
-        if (provider.recipes.isEmpty) {
+        if (provider.recipesList.isEmpty) {
           return const SizedBox(height: 200, child: Center(child: Text('Belum ada resep')));
         }
 
@@ -312,9 +312,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: provider.recipes.length,
+            itemCount: provider.recipesList.length,
             itemBuilder: (context, index) {
-              final recipe = provider.recipes[index];
+              final recipe = provider.recipesList[index];
               return _buildRecipeCard(recipe);
             },
           ),
@@ -328,7 +328,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipeId: recipe.id!)),
+          MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
         );
       },
       child: Container(
@@ -347,7 +347,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: CachedNetworkImage(
-                imageUrl: recipe.imageUrl ?? '',
+                imageUrl: recipe.photo ?? '',
                 height: 140,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -379,7 +379,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       Icon(Icons.timer, size: 14, color: Colors.blue.shade700),
                       const SizedBox(width: 4),
                       Text(
-                        '${recipe.preparationTime}m',
+                        '${recipe.prepTimeMinutes ?? 0}m',
                         style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                       ),
                     ],

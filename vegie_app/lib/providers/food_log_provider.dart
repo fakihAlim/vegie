@@ -17,8 +17,11 @@ class FoodLogProvider with ChangeNotifier {
   
   // Streak
   int _streak = 0;
-  List<String> _logDates = []; // yyyy-MM-dd strings of dates that have logs
+  List<String> _logDates = []; 
   
+  // --- OPTIMASI: Set untuk Lookup Tanggal secepat O(1) ---
+  Set<String> _logDatesSet = {};
+
   // Quote
   DailyQuote? _todayQuote;
   
@@ -33,18 +36,22 @@ class FoodLogProvider with ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
 
   /// Get food logs filtered by the selected date
+  /// OPTIMIZED: Memakai komparasi Integer yang jauh lebih hemat CPU daripada parsing ISO String
   List<FoodLog> get filteredLogs {
-    final dateStr = _selectedDate.toIso8601String().substring(0, 10);
     return _logs.where((log) {
-      final logDateStr = log.mealTime.toIso8601String().substring(0, 10);
-      return logDateStr == dateStr;
+      return log.mealTime.year == _selectedDate.year &&
+             log.mealTime.month == _selectedDate.month &&
+             log.mealTime.day == _selectedDate.day;
     }).toList();
   }
 
   /// Check if a specific date has any food logs
+  /// OPTIMIZED: Tidak membuat memori string baru dalam skala besar & pencarian secepat O(1) berkat 'Set'
   bool hasLogsOnDate(DateTime date) {
-    final dateStr = date.toIso8601String().substring(0, 10);
-    return _logDates.contains(dateStr);
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    final dateStr = '${date.year}-$m-$d';
+    return _logDatesSet.contains(dateStr);
   }
 
   /// Change selected date and notify listeners
@@ -75,6 +82,7 @@ class FoodLogProvider with ChangeNotifier {
       _streak = result['streak'] ?? 0;
       if (result['dates'] != null) {
         _logDates = List<String>.from(result['dates']);
+        _logDatesSet = _logDates.toSet(); // Menyimpan ke format Set juga
       }
       notifyListeners();
     } catch (e) {
@@ -101,10 +109,7 @@ class FoodLogProvider with ChangeNotifier {
     ]);
   }
 
-  /// Add a food log. Returns a Map containing:
-  ///   - 'badges': List of newly-unlocked badges (may be empty)
-  ///   - 'points': Points awarded for this log (+50 or -20)
-  /// The caller (screen) should show BadgeCelebrationDialog for each badge.
+  /// Add a food log.
   Future<Map<String, dynamic>> addLog(FoodLog log) async {
     try {
       // First, save locally
@@ -194,12 +199,16 @@ class FoodLogProvider with ChangeNotifier {
     }
   }
 
-  /// Rebuild _logDates from current _logs
+  /// Rebuild _logDates and _logDatesSet from current _logs
   void _updateLogDates() {
-    final Set<String> dates = {};
+    _logDatesSet.clear();
     for (var log in _logs) {
-      dates.add(log.mealTime.toIso8601String().substring(0, 10));
+      final m = log.mealTime.month.toString().padLeft(2, '0');
+      final d = log.mealTime.day.toString().padLeft(2, '0');
+      _logDatesSet.add('${log.mealTime.year}-$m-$d');
     }
-    _logDates = dates.toList()..sort((a, b) => b.compareTo(a));
+    
+    // Sort array for legacy use
+    _logDates = _logDatesSet.toList()..sort((a, b) => b.compareTo(a));
   }
 }

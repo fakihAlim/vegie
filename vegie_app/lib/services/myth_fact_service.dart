@@ -1,7 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../config/constants.dart';
-import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
 
 class MythFact {
   final int id;
@@ -30,22 +27,17 @@ class MythFact {
 }
 
 class MythFactService {
-  Future<List<MythFact>> getMyths() async {
-    final token = await AuthService.instance.getToken();
-    final response = await http.get(
-      Uri.parse('${Constants.apiBaseUrl}/myths'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+  final ApiService _apiService = ApiService();
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        final List<dynamic> items = data['data'];
+  Future<List<MythFact>> getMyths() async {
+    try {
+      final response = await _apiService.get('/myths', requireAuth: true);
+      if (response['success'] == true) {
+        final List<dynamic> items = response['data'];
         return items.map((json) => MythFact.fromJson(json)).toList();
       }
+    } catch (e) {
+      print('Error fetching myths: $e');
     }
     throw Exception('Failed to load myths');
   }
