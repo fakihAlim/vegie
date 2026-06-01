@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
+
 
 class Quest {
   final int userQuestId;
@@ -49,7 +51,7 @@ class QuestService {
         return items.map((json) => Quest.fromJson(json)).toList();
       }
     } catch (e) {
-      print('Error fetching quests: $e');
+      debugPrint('Error fetching quests: $e');
     }
     throw Exception('Failed to load quests');
   }
@@ -65,7 +67,7 @@ class QuestService {
         return response['data']['updated'] ?? false;
       }
     } catch (e) {
-      print('Error updating quest progress: $e');
+      debugPrint('Error updating quest progress: $e');
     }
     return false;
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/group.dart';
 import '../../models/group_post.dart';
@@ -14,7 +13,7 @@ class GroupDetailScreen extends StatefulWidget {
   final int groupId;
   final String groupName;
 
-  const GroupDetailScreen({Key? key, required this.groupId, required this.groupName}) : super(key: key);
+  const GroupDetailScreen({super.key, required this.groupId, required this.groupName});
 
   @override
   State<GroupDetailScreen> createState() => _GroupDetailScreenState();
@@ -132,7 +131,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> with SingleTicker
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
+                                          color: Colors.white.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Row(
@@ -211,7 +210,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> with SingleTicker
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.forum_outlined, size: 64, color: AppTheme.primary.withOpacity(0.3)),
+            Icon(Icons.forum_outlined, size: 64, color: AppTheme.primary.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             const Text('Belum ada postingan', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
             const SizedBox(height: 8),
@@ -255,7 +254,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> with SingleTicker
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2)),
         ],
       ),
       child: Row(

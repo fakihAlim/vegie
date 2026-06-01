@@ -9,7 +9,7 @@ import '../../services/activity_log_service.dart';
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe; // Kirim object utuh dari list
 
-  const RecipeDetailScreen({Key? key, required this.recipe}) : super(key: key);
+  const RecipeDetailScreen({super.key, required this.recipe});
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -70,7 +70,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: AppTheme.accentLight,
-                              child: Icon(Icons.restaurant, size: 80, color: AppTheme.primary.withOpacity(0.3)),
+                              child: Icon(Icons.restaurant, size: 80, color: AppTheme.primary.withValues(alpha: 0.3)),
                             ),
                           ),
                           const DecoratedBox(
@@ -89,7 +89,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       )
                     : Container(
                         color: AppTheme.accentLight,
-                        child: Icon(Icons.restaurant, size: 80, color: AppTheme.primary.withOpacity(0.3)),
+                        child: Icon(Icons.restaurant, size: 80, color: AppTheme.primary.withValues(alpha: 0.3)),
                       ),
               ),
             ),
@@ -129,7 +129,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           )
@@ -190,7 +190,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppTheme.accentLight.withOpacity(0.5),
+                          color: AppTheme.accentLight.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
@@ -239,7 +239,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryLight.withOpacity(0.2),
+                                color: AppTheme.primaryLight.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                                 border: Border.all(color: AppTheme.primary, width: 2),
                               ),
@@ -266,7 +266,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             ),
                           ],
                         ),
-                      )).toList(),
+                      )),
                     ],
                   ],
                 ),
@@ -284,7 +284,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 24),

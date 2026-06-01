@@ -72,6 +72,7 @@ class AuthController {
                 'age' => null,
                 'weight' => null,
                 'height' => null,
+                'gender' => null,
                 'total_carbon_saved' => 0.00,
                 'join_date' => $joinDate,
                 'is_onboarding_completed' => false,
@@ -122,6 +123,7 @@ class AuthController {
                 'age' => $user['age'] !== null ? (int)$user['age'] : null,
                 'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
                 'height' => $user['height'] !== null ? (float)$user['height'] : null,
+                'gender' => $user['gender'],
                 'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
                 'join_date' => $user['join_date'],
                 'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
@@ -140,7 +142,7 @@ class AuthController {
         $userId = $auth['user_id'];
 
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, age, weight, height, total_carbon_saved, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, gender, total_carbon_saved, join_date, is_onboarding_completed, created_at FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -174,6 +176,7 @@ class AuthController {
             'age' => $user['age'] !== null ? (int)$user['age'] : null,
             'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
             'height' => $user['height'] !== null ? (float)$user['height'] : null,
+            'gender' => $user['gender'],
             'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
@@ -201,17 +204,19 @@ class AuthController {
         $age = $_POST['age'] ?? null;
         $weight = $_POST['weight'] ?? null;
         $height = $_POST['height'] ?? null;
+        $gender = $_POST['gender'] ?? null;
         $presetPhoto = $_POST['photo'] ?? null;
         $photoPath = null;
 
         // If no POST data, try JSON body
-        if (!$name && !$age && !$weight && !$height && !$presetPhoto) {
+        if (!$name && !$age && !$weight && !$height && !$gender && !$presetPhoto) {
             $data = getJsonBody();
             $name = $data['name'] ?? null;
             $bio = $data['bio'] ?? null;
             $age = $data['age'] ?? null;
             $weight = $data['weight'] ?? null;
             $height = $data['height'] ?? null;
+            $gender = $data['gender'] ?? null;
             $presetPhoto = $data['photo'] ?? null;
         }
 
@@ -257,6 +262,10 @@ class AuthController {
             $updates[] = "height = ?";
             $params[] = (float)$height;
         }
+        if ($gender !== null) {
+            $updates[] = "gender = ?";
+            $params[] = trim($gender);
+        }
         if ($photoPath !== null) {
             $updates[] = "photo = ?";
             $params[] = $photoPath;
@@ -273,7 +282,7 @@ class AuthController {
 
         // Return updated profile
         $stmt = $this->db->prepare(
-            "SELECT id, name, email, photo, bio, age, weight, height, total_carbon_saved, join_date, is_onboarding_completed FROM users WHERE id = ?"
+            "SELECT id, name, email, photo, bio, age, weight, height, gender, total_carbon_saved, join_date, is_onboarding_completed FROM users WHERE id = ?"
         );
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
@@ -290,6 +299,7 @@ class AuthController {
             'age' => $user['age'] !== null ? (int)$user['age'] : null,
             'weight' => $user['weight'] !== null ? (float)$user['weight'] : null,
             'height' => $user['height'] !== null ? (float)$user['height'] : null,
+            'gender' => $user['gender'],
             'total_carbon_saved' => $user['total_carbon_saved'] !== null ? (float)$user['total_carbon_saved'] : 0.00,
             'join_date' => $user['join_date'],
             'is_onboarding_completed' => (bool)$user['is_onboarding_completed'],
@@ -355,6 +365,7 @@ class AuthController {
         $age = isset($data['age']) ? (int)$data['age'] : null;
         $weight = isset($data['weight']) ? (float)$data['weight'] : null;
         $height = isset($data['height']) ? (float)$data['height'] : null;
+        $gender = isset($data['gender']) ? trim($data['gender']) : null;
         $photo = isset($data['photo']) ? trim($data['photo']) : null;
 
         $ttmStage = strtolower($stage);
@@ -374,10 +385,11 @@ class AuthController {
                 age = ?, 
                 weight = ?, 
                 height = ?, 
-                photo = ? 
+                photo = ?,
+                gender = ? 
              WHERE id = ?"
         );
-        $stmt->execute([$stage, $ttmStage, $actionStartDate, $age, $weight, $height, $photo, $userId]);
+        $stmt->execute([$stage, $ttmStage, $actionStartDate, $age, $weight, $height, $photo, $gender, $userId]);
 
         jsonSuccess(null, 'Onboarding completed successfully');
     }

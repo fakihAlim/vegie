@@ -9,7 +9,7 @@ import '../groups/group_list_screen.dart';
 import '../quizzes/quiz_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
-  const DiscoverScreen({Key? key}) : super(key: key);
+  const DiscoverScreen({super.key});
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -124,9 +124,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: quest.isCompleted ? AppTheme.success.withOpacity(0.3) : Colors.transparent),
+                border: Border.all(color: quest.isCompleted ? AppTheme.success.withValues(alpha: 0.3) : Colors.transparent),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3)),
                 ],
               ),
               child: ListTile(
@@ -134,7 +134,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: quest.isCompleted ? AppTheme.success.withOpacity(0.1) : AppTheme.primaryLight.withOpacity(0.1),
+                    color: quest.isCompleted ? AppTheme.success.withValues(alpha: 0.1) : AppTheme.primaryLight.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -169,7 +169,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
+                            color: Colors.orange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -234,7 +234,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: AppTheme.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+            BoxShadow(color: AppTheme.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
           ],
         ),
         child: Stack(
@@ -242,7 +242,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
             Positioned(
               right: -20,
               top: -20,
-              child: Icon(Icons.lightbulb, size: 120, color: Colors.white.withOpacity(0.2)),
+              child: Icon(Icons.lightbulb, size: 120, color: Colors.white.withValues(alpha: 0.2)),
             ),
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -254,7 +254,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text('KUIS BARU', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
@@ -271,7 +271,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _dailyQuiz!['question'],
-                    style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -314,7 +314,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Row(
@@ -322,7 +322,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.people, color: Colors.blue),
@@ -368,7 +368,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [

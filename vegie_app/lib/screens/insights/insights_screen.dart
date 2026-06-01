@@ -13,7 +13,7 @@ import '../news/news_detail_screen.dart';
 import '../recipes/recipe_detail_screen.dart';
 
 class InsightsScreen extends StatefulWidget {
-  const InsightsScreen({Key? key}) : super(key: key);
+  const InsightsScreen({super.key});
 
   @override
   State<InsightsScreen> createState() => _InsightsScreenState();
@@ -138,7 +138,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -155,7 +155,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
               child: Icon(
                 isMyth ? Icons.help_outline : Icons.check_circle_outline,
                 size: 120,
-                color: badgeColor.withOpacity(0.1),
+                color: badgeColor.withValues(alpha: 0.1),
               ),
             ),
             Padding(
@@ -166,7 +166,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: badgeColor.withOpacity(0.15),
+                      color: badgeColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -254,7 +254,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3)),
           ],
         ),
         child: Column(
@@ -338,7 +338,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3)),
           ],
         ),
         child: Column(

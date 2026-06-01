@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import '../../services/api_service.dart';
+
 
 class MythFact {
   final int id;
@@ -37,7 +39,7 @@ class MythFactService {
         return items.map((json) => MythFact.fromJson(json)).toList();
       }
     } catch (e) {
-      print('Error fetching myths: $e');
+      debugPrint('Error fetching myths: $e');
     }
     throw Exception('Failed to load myths');
   }

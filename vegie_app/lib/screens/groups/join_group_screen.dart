@@ -5,7 +5,7 @@ import '../../providers/group_provider.dart';
 import '../../services/activity_log_service.dart';
 
 class JoinGroupScreen extends StatefulWidget {
-  const JoinGroupScreen({Key? key}) : super(key: key);
+  const JoinGroupScreen({super.key});
 
   @override
   State<JoinGroupScreen> createState() => _JoinGroupScreenState();
@@ -71,7 +71,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: AppTheme.accentLight.withOpacity(0.5),
+                color: AppTheme.accentLight.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(

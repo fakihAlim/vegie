@@ -7,7 +7,7 @@ import '../screens/recipes/recipe_detail_screen.dart';
 class RecipeCard extends StatelessWidget {
   final Recipe recipe;
 
-  const RecipeCard({Key? key, required this.recipe}) : super(key: key);
+  const RecipeCard({super.key, required this.recipe});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class RecipeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -33,8 +33,8 @@ class RecipeCard extends StatelessWidget {
               context,
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (_, __, ___) => RecipeDetailScreen(recipe: recipe),
-                transitionsBuilder: (_, animation, __, child) {
+                pageBuilder: (_, _, _) => RecipeDetailScreen(recipe: recipe),
+                transitionsBuilder: (_, animation, _, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
               ),
@@ -74,7 +74,7 @@ class RecipeCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.3),
+                            Colors.black.withValues(alpha: 0.3),
                           ],
                           stops: const [0.6, 1.0],
                         ),
@@ -154,11 +154,11 @@ class RecipeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: bgColor.withOpacity(0.9),
+        color: bgColor.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -187,7 +187,7 @@ class RecipeCard extends StatelessWidget {
       height: 220,
       width: double.infinity,
       color: AppTheme.accentLight,
-      child: Icon(Icons.restaurant, size: 64, color: AppTheme.primary.withOpacity(0.3)),
+      child: Icon(Icons.restaurant, size: 64, color: AppTheme.primary.withValues(alpha: 0.3)),
     );
   }
 }

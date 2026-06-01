@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'config/constants.dart';
 import 'services/fcm_service.dart';
 import 'services/activity_log_service.dart';
@@ -9,22 +10,27 @@ import 'app.dart';
 
 Future<void> _initializeServerConfig() async {
   try {
-    // Try to reach the local server with a short timeout
+    // Try to reach the local server's quotes endpoint which requires database access
     final response = await http
-        .get(Uri.parse(Constants.localUrl))
+        .get(Uri.parse('${Constants.localUrl}/index.php?route=quotes/today'))
         .timeout(const Duration(seconds: 2));
     
-    if (response.statusCode >= 200 && response.statusCode < 500) {
-      Constants.baseUrl = Constants.localUrl;
-      print("Connected to Local Server");
-    } else {
-      Constants.baseUrl = Constants.onlineUrl;
-      print("Local Server returned error, falling back to Online Server");
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data is Map && data['success'] == true) {
+        Constants.baseUrl = Constants.localUrl;
+        debugPrint("Connected to Local Server successfully (Database is OK)");
+        return;
+      }
     }
-  } catch (e) {
-    // If timeout or connection refused, fallback to online
+    
+    // If not successful or DB is down, fallback to online
     Constants.baseUrl = Constants.onlineUrl;
-    print("Local Server unreachable, falling back to Online Server");
+    debugPrint("Local Server returned error or DB down, falling back to Online Server");
+  } catch (e) {
+    // If timeout, connection refused, or JSON parsing error, fallback to online
+    Constants.baseUrl = Constants.onlineUrl;
+    debugPrint("Local Server unreachable ($e), falling back to Online Server");
   }
 }
 

@@ -17,7 +17,7 @@ class LocalNotificationService {
     
     // Dynamically detect the native device timezone name
     try {
-      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+      final String timeZoneName = (await FlutterTimezone.getLocalTimezone()).identifier;
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
       // Robust fallback to Jakarta timezone if detection fails

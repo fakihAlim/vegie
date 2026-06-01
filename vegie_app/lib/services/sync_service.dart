@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io';
+
 import '../models/food_log.dart';
 import '../database/local_db.dart';
 import 'api_service.dart';
@@ -25,8 +27,8 @@ class SyncService {
         try {
           if (log.photoPath != null && File(log.photoPath!).existsSync()) {
             // Always use multipart POST when photo exists
-            print('[SyncService] Uploading with photo: ${log.photoPath}');
-            print('[SyncService] Photo size: ${File(log.photoPath!).lengthSync()} bytes');
+            debugPrint('[SyncService] Uploading with photo: ${log.photoPath}');
+            debugPrint('[SyncService] Photo size: ${File(log.photoPath!).lengthSync()} bytes');
 
             // If it has ID, it's an update, else it's a create
             final endpoint = log.id != null 
@@ -41,12 +43,13 @@ class SyncService {
                 'meal_time': log.mealTime.toIso8601String(),
                 if (log.nutritionNotes != null) 'nutrition_notes': log.nutritionNotes!,
                 'points': log.points.toString(),
+                if (log.rawResponse != null) 'raw_response': log.rawResponse!,
               },
               'photo',
               log.photoPath,
             );
 
-            print('[SyncService] Response success=${response['success']}, food=${response['data']?['food_name']}');
+            debugPrint('[SyncService] Response success=${response['success']}, food=${response['data']?['food_name']}');
 
             if (response['success'] == true) {
               await _markAsSynced(log, response['data']);
@@ -71,7 +74,7 @@ class SyncService {
                 },
               );
             } else {
-              print('[SyncService] Upload failed: ${response['message']}');
+              debugPrint('[SyncService] Upload failed: ${response['message']}');
             }
           } else {
             // Upload without photo or photo not found locally anymore
@@ -109,13 +112,13 @@ class SyncService {
             }
           }
         } catch (e) {
-          print("Error syncing log ${log.localId}: $e");
+          debugPrint("Error syncing log ${log.localId}: $e");
         }
       }
 
       return newlyUnlockedBadges;
     } catch (e) {
-      print("Sync error: $e");
+      debugPrint("Sync error: $e");
       return newlyUnlockedBadges;
     }
   }
@@ -161,7 +164,7 @@ class SyncService {
         await _localDb.replaceAllFoodLogs(logs);
       }
     } catch (e) {
-      print("Pull logs error: $e");
+      debugPrint("Pull logs error: $e");
     }
   }
 }

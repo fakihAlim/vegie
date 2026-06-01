@@ -7,7 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
 class OnboardingQuestionnaireScreen extends StatefulWidget {
-  const OnboardingQuestionnaireScreen({Key? key}) : super(key: key);
+  const OnboardingQuestionnaireScreen({super.key});
 
   @override
   State<OnboardingQuestionnaireScreen> createState() => _OnboardingQuestionnaireScreenState();
@@ -21,6 +21,7 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
   final TextEditingController _heightController = TextEditingController();
   
   String? _selectedAvatar;
+  String? _selectedGender = 'male';
   
   final List<String> _avatars = [
     'abstract-shape.png',
@@ -57,7 +58,7 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
   bool? intend30Days;
   bool? intend6Months;
 
-  bool _isSubmitting = false;
+
 
   @override
   void dispose() {
@@ -89,10 +90,6 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
   }
 
   Future<void> _submitAndFinish() async {
-    setState(() {
-      _isSubmitting = true;
-    });
-
     String stage = 'PRECONTEMPLATION';
 
     if (isPracticing == true) {
@@ -120,20 +117,18 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
       weight: double.tryParse(_weightController.text) ?? 0.0,
       height: double.tryParse(_heightController.text) ?? 0.0,
       photo: _selectedAvatar ?? 'sakura.png',
+      gender: _selectedGender,
     );
-
     if (success && mounted) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(Constants.keyOnboardingCompleted, true);
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal menyimpan profil & preferensi. Coba lagi.')),
       );
@@ -177,6 +172,108 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
             ),
           ),
           const SizedBox(height: 36),
+          // Gender selector
+          const Text(
+            'Jenis Kelamin',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedGender = 'male'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: _selectedGender == 'male'
+                          ? AppTheme.primary.withValues(alpha: 0.1)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedGender == 'male'
+                            ? AppTheme.primary
+                            : Colors.grey.shade200,
+                        width: _selectedGender == 'male' ? 2 : 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.male_rounded,
+                          size: 32,
+                          color: _selectedGender == 'male'
+                              ? AppTheme.primary
+                              : Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Pria',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: _selectedGender == 'male'
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedGender = 'female'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: _selectedGender == 'female'
+                          ? AppTheme.primary.withValues(alpha: 0.1)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedGender == 'female'
+                            ? AppTheme.primary
+                            : Colors.grey.shade200,
+                        width: _selectedGender == 'female' ? 2 : 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.female_rounded,
+                          size: 32,
+                          color: _selectedGender == 'female'
+                              ? AppTheme.primary
+                              : Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Wanita',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: _selectedGender == 'female'
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           // Usia input
           _buildInputField(
             controller: _ageController,
@@ -337,7 +434,7 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primaryLight.withOpacity(0.1) : Colors.white,
+                    color: isSelected ? AppTheme.primaryLight.withValues(alpha: 0.1) : Colors.white,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected ? AppTheme.primary : Colors.grey.shade200,
@@ -346,8 +443,8 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
                     boxShadow: [
                       BoxShadow(
                         color: isSelected
-                            ? AppTheme.primary.withOpacity(0.15)
-                            : Colors.black.withOpacity(0.01),
+                            ? AppTheme.primary.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.01),
                         blurRadius: isSelected ? 12 : 4,
                         offset: const Offset(0, 4),
                       ),

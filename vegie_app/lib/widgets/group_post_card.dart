@@ -6,7 +6,7 @@ import '../../models/group_post.dart';
 class GroupPostCard extends StatelessWidget {
   final GroupPost post;
 
-  const GroupPostCard({Key? key, required this.post}) : super(key: key);
+  const GroupPostCard({super.key, required this.post});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class GroupPostCard extends StatelessWidget {
         border: Border.all(color: typeConfig['borderColor'] as Color, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

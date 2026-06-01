@@ -68,7 +68,7 @@ class FoodLogProvider with ChangeNotifier {
       _logs = await _foodLogService.getFoodLogs();
       _updateLogDates();
     } catch (e) {
-      print("Error fetching logs: $e");
+      debugPrint("Error fetching logs: $e");
     }
 
     _isLoading = false;
@@ -86,7 +86,7 @@ class FoodLogProvider with ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      print("Error fetching streak: $e");
+      debugPrint("Error fetching streak: $e");
     }
   }
 
@@ -96,7 +96,7 @@ class FoodLogProvider with ChangeNotifier {
       _todayQuote = await _quoteService.getTodayQuote();
       notifyListeners();
     } catch (e) {
-      print("Error fetching quote: $e");
+      debugPrint("Error fetching quote: $e");
     }
   }
 
@@ -138,7 +138,7 @@ class FoodLogProvider with ChangeNotifier {
         'log': syncedLog,
       };
     } catch (e) {
-      print("Error adding log: $e");
+      debugPrint("Error adding log: $e");
       return {
         'badges': <Map<String, dynamic>>[],
         'points': 0,
@@ -157,7 +157,7 @@ class FoodLogProvider with ChangeNotifier {
       }
       return true;
     } catch (e) {
-      print("Error updating log: $e");
+      debugPrint("Error updating log: $e");
       return false;
     }
   }
@@ -171,7 +171,7 @@ class FoodLogProvider with ChangeNotifier {
       // Refresh from server to ensure consistency
       await fetchLogs();
     } catch (e) {
-      print("Error deleting log: $e");
+      debugPrint("Error deleting log: $e");
     }
   }
 
@@ -194,7 +194,7 @@ class FoodLogProvider with ChangeNotifier {
       }
       return true;
     } catch (e) {
-      print("Error toggling share: $e");
+      debugPrint("Error toggling share: $e");
       return false;
     }
   }

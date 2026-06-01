@@ -54,7 +54,7 @@ class AuthProvider with ChangeNotifier {
       if (errorStr.contains('Unauthorized') || errorStr.contains('401')) {
         await logout();
       }
-      print("Background profile refresh error: $e");
+      debugPrint("Background profile refresh error: $e");
     }
   }
 
@@ -75,7 +75,7 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Fetch badges error: $e");
+      debugPrint("Fetch badges error: $e");
     }
   }
 
@@ -106,7 +106,7 @@ class AuthProvider with ChangeNotifier {
         return true;
       }
     } catch (e) {
-      print("Login error: $e");
+      debugPrint("Login error: $e");
     }
 
     _isLoading = false;
@@ -134,7 +134,7 @@ class AuthProvider with ChangeNotifier {
         return true;
       }
     } catch (e) {
-      print("Register error: $e");
+      debugPrint("Register error: $e");
     }
 
     _isLoading = false;
@@ -155,6 +155,7 @@ class AuthProvider with ChangeNotifier {
     required double weight,
     required double height,
     required String photo,
+    String? gender,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -165,6 +166,7 @@ class AuthProvider with ChangeNotifier {
       weight: weight,
       height: height,
       photo: photo,
+      gender: gender,
     );
     
     if (success && _user != null) {
@@ -175,6 +177,7 @@ class AuthProvider with ChangeNotifier {
         weight: weight,
         height: height,
         photo: photo,
+        gender: gender,
       );
       await _authService.saveUser(_user!);
     }
@@ -191,6 +194,7 @@ class AuthProvider with ChangeNotifier {
     double? weight,
     double? height,
     String? photo,
+    String? gender,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -202,6 +206,7 @@ class AuthProvider with ChangeNotifier {
       weight: weight,
       height: height,
       photo: photo,
+      gender: gender,
     );
 
     if (updatedUser != null) {

@@ -13,7 +13,7 @@ import '../food_log/add_food_log_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
-  const HomeScreen({Key? key, this.initialIndex = 0}) : super(key: key);
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

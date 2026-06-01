@@ -11,7 +11,7 @@ import 'login_screen.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -65,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
-            border: Border.all(color: AppTheme.primary.withOpacity(0.1), width: 1.5),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.1), width: 1.5),
             image: DecorationImage(
               image: AssetImage('assets/images/avatars/$photo'),
               fit: BoxFit.contain,
@@ -131,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.015),
+            color: Colors.black.withValues(alpha: 0.015),
             blurRadius: 8,
             offset: const Offset(0, 4),
           )
@@ -211,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.15),
+                                color: AppTheme.primary.withValues(alpha: 0.15),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               )
@@ -264,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.2),
+                            color: AppTheme.primary.withValues(alpha: 0.2),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           )
@@ -285,18 +285,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
               
-              // 2. Profile Details Grid (Usia, TB, BB)
+              // 2. Profile Details Grid (Usia, TB, BB, Gender)
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
                     child: _buildProfileDetailCard('Usia', user.age != null ? '${user.age} thn' : '-', Icons.cake_rounded),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildProfileDetailCard(
+                      'Gender',
+                      user.gender != null
+                          ? (user.gender!.toLowerCase() == 'male' ? 'Pria' : 'Wanita')
+                          : '-',
+                      user.gender != null
+                          ? (user.gender!.toLowerCase() == 'male' ? Icons.male_rounded : Icons.female_rounded)
+                          : Icons.wc_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Expanded(
                     child: _buildProfileDetailCard('Tinggi', user.height != null ? '${user.height!.round()} cm' : '-', Icons.height_rounded),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _buildProfileDetailCard('Berat', user.weight != null ? '${user.weight!.round()} kg' : '-', Icons.monitor_weight_rounded),
                   ),
@@ -349,7 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.green.withOpacity(0.15),
+                      color: Colors.green.withValues(alpha: 0.15),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     )
@@ -363,7 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 24),
@@ -393,12 +408,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Pola makan vegetarian Anda secara nyata mengurangi pemanasan global.',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Divider(color: Colors.white.withOpacity(0.2), height: 1, thickness: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.2), height: 1, thickness: 1),
                     const SizedBox(height: 16),
                     // Equivalences
                     _buildEcologicalRow(
@@ -544,7 +559,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 120,
                     repeat: false,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (_, _, _) => const Icon(
                       Icons.military_tech_rounded,
                       size: 80,
                       color: Color(0xFFFFD700),
@@ -610,7 +625,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 90,
                             repeat: false,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Icon(
+                            errorBuilder: (_, _, _) => Icon(
                               Icons.military_tech_rounded,
                               size: 70,
                               color: Colors.grey.shade400,
@@ -734,15 +749,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: badge.isUnlocked
-                ? AppTheme.accent.withOpacity(0.5)
+                ? AppTheme.accent.withValues(alpha: 0.5)
                 : Colors.grey.shade100,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: badge.isUnlocked
-                  ? AppTheme.primary.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.025),
+                  ? AppTheme.primary.withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.025),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -763,7 +778,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             badge.lottieFile,
                             fit: BoxFit.contain,
                             repeat: false, // diam di frame terakhir
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, _, _) => const Icon(
                               Icons.military_tech_rounded,
                               size: 52,
                               color: Color(0xFFFFD700),
@@ -775,7 +790,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               badge.lottieFile,
                               fit: BoxFit.contain,
                               repeat: false,
-                              errorBuilder: (_, __, ___) => const Icon(
+                              errorBuilder: (_, _, _) => const Icon(
                                 Icons.military_tech_rounded,
                                 size: 52,
                                 color: Colors.grey,
@@ -815,7 +830,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -853,7 +868,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -868,7 +883,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -901,7 +916,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 20),
@@ -925,7 +940,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 class _EditProfileSheet extends StatefulWidget {
   final User user;
-  const _EditProfileSheet({Key? key, required this.user}) : super(key: key);
+  const _EditProfileSheet({required this.user});
 
   @override
   State<_EditProfileSheet> createState() => _EditProfileSheetState();
@@ -939,6 +954,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _heightController;
   
   String? _selectedAvatar;
+  String? _selectedGender;
   bool _isSaving = false;
 
   final List<String> _avatars = [
@@ -979,6 +995,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _ageController = TextEditingController(text: widget.user.age?.toString() ?? '');
     _weightController = TextEditingController(text: widget.user.weight?.round().toString() ?? '');
     _heightController = TextEditingController(text: widget.user.height?.round().toString() ?? '');
+    _selectedGender = widget.user.gender ?? 'male';
     
     // Check if the current photo is one of the presets
     final currentPhoto = widget.user.photo;
@@ -1017,6 +1034,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       weight: double.tryParse(_weightController.text.trim()),
       height: double.tryParse(_heightController.text.trim()),
       photo: _selectedAvatar,
+      gender: _selectedGender,
     );
 
     setState(() {
@@ -1111,7 +1129,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected ? AppTheme.primaryLight.withOpacity(0.15) : Colors.transparent,
+                        color: isSelected ? AppTheme.primaryLight.withValues(alpha: 0.15) : Colors.transparent,
                         border: Border.all(
                           color: isSelected ? AppTheme.primary : Colors.grey.shade200,
                           width: isSelected ? 3.0 : 1.5,
@@ -1133,6 +1151,106 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             _buildInputField(controller: _nameController, label: 'Nama Lengkap', icon: Icons.person_outline_rounded),
             const SizedBox(height: 16),
             _buildInputField(controller: _bioController, label: 'Slogan / Bio', icon: Icons.chat_bubble_outline_rounded),
+            const SizedBox(height: 16),
+            
+            const Text(
+              'Jenis Kelamin',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedGender = 'male'),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedGender == 'male'
+                            ? AppTheme.primary.withValues(alpha: 0.1)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedGender == 'male'
+                              ? AppTheme.primary
+                              : Colors.grey.shade200,
+                          width: _selectedGender == 'male' ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.male_rounded,
+                            size: 20,
+                            color: _selectedGender == 'male'
+                                ? AppTheme.primary
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Pria',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: _selectedGender == 'male'
+                                  ? AppTheme.primary
+                                  : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedGender = 'female'),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedGender == 'female'
+                            ? AppTheme.primary.withValues(alpha: 0.1)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedGender == 'female'
+                              ? AppTheme.primary
+                              : Colors.grey.shade200,
+                          width: _selectedGender == 'female' ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.female_rounded,
+                            size: 20,
+                            color: _selectedGender == 'female'
+                                ? AppTheme.primary
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Wanita',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: _selectedGender == 'female'
+                                  ? AppTheme.primary
+                                  : AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             
             Row(

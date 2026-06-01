@@ -4,7 +4,7 @@ import '../../config/theme.dart';
 import '../../services/local_notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -113,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.1),
+                  color: AppTheme.primary.withValues(alpha: 0.1),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 )
@@ -124,7 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 28),
@@ -141,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Bantu bangun kebiasaan mencatat food log agar diet plant-based kamu tetap terpantau.',
-                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12, height: 1.4),
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12, height: 1.4),
                       ),
                     ],
                   ),
@@ -158,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withValues(alpha: 0.02),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -168,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 // Toggle Switch
                 SwitchListTile(
-                  activeColor: AppTheme.primary,
+                  activeThumbColor: AppTheme.primary,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   title: const Text(
                     'Aktifkan Pengingat',
@@ -186,16 +186,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _isReminderEnabled = value;
                     });
                     await _saveSettings();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(value 
-                              ? 'Pengingat harian diaktifkan! ⏰' 
-                              : 'Pengingat harian dinonaktifkan'),
-                          backgroundColor: value ? AppTheme.primary : AppTheme.error,
-                        ),
-                      );
-                    }
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(value 
+                            ? 'Pengingat harian diaktifkan! ⏰' 
+                            : 'Pengingat harian dinonaktifkan'),
+                        backgroundColor: value ? AppTheme.primary : AppTheme.error,
+                      ),
+                    );
                   },
                 ),
                 
@@ -215,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryLight.withOpacity(0.1),
+                      color: AppTheme.primaryLight.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

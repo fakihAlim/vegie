@@ -7,6 +7,7 @@ class User {
   final int? age;
   final double? weight;
   final double? height;
+  final String? gender;
   double totalCarbonSaved; // Non-final to allow incrementing locally
   final String joinDate;
   final Map<String, int>? stats;
@@ -25,6 +26,7 @@ class User {
     this.age,
     this.weight,
     this.height,
+    this.gender,
     this.totalCarbonSaved = 0.0,
     required this.joinDate,
     this.stats,
@@ -45,6 +47,7 @@ class User {
       age: json['age'] != null ? (json['age'] as num).toInt() : null,
       weight: json['weight'] != null ? (json['weight'] as num).toDouble() : null,
       height: json['height'] != null ? (json['height'] as num).toDouble() : null,
+      gender: json['gender'],
       totalCarbonSaved: json['total_carbon_saved'] != null ? (json['total_carbon_saved'] as num).toDouble() : 0.0,
       joinDate: json['join_date'],
       stats: json['stats'] != null 
@@ -70,6 +73,7 @@ class User {
       'age': age,
       'weight': weight,
       'height': height,
+      'gender': gender,
       'total_carbon_saved': totalCarbonSaved,
       'join_date': joinDate,
       'stats': stats,
@@ -90,6 +94,7 @@ class User {
     int? age,
     double? weight,
     double? height,
+    String? gender,
     double? totalCarbonSaved,
     String? joinDate,
     Map<String, int>? stats,
@@ -108,6 +113,7 @@ class User {
       age: age ?? this.age,
       weight: weight ?? this.weight,
       height: height ?? this.height,
+      gender: gender ?? this.gender,
       totalCarbonSaved: totalCarbonSaved ?? this.totalCarbonSaved,
       joinDate: joinDate ?? this.joinDate,
       stats: stats ?? this.stats,
@@ -117,5 +123,45 @@ class User {
       totalPoints: totalPoints ?? this.totalPoints,
       unlockedBadges: unlockedBadges ?? this.unlockedBadges,
     );
+  }
+
+  Map<String, double> calculateDailyNutritionTargets() {
+    // If any required physical metric is null, return standard balanced targets
+    if (weight == null || height == null || age == null || gender == null) {
+      return {
+        'calories': 2000.0,
+        'carbs': 250.0,
+        'fat': 66.7,
+        'protein': 100.0,
+      };
+    }
+
+    // Step 1: Calculate BMR using Mifflin-St Jeor
+    double bmr = 0.0;
+    if (gender!.trim().toLowerCase() == 'male') {
+      bmr = (10 * weight!) + (6.25 * height!) - (5 * age!) + 5;
+    } else {
+      bmr = (10 * weight!) + (6.25 * height!) - (5 * age!) - 161;
+    }
+
+    // Step 2: Calculate TDEE (Total Daily Energy Expenditure)
+    // Proposal: default activity factor is 1.375 (Lightly Active / Jarang berolahraga)
+    double activityFactor = 1.375;
+    double tdee = bmr * activityFactor;
+
+    // Step 3: Calculate Macronutrient targets in grams
+    // Karbohidrat: 50% dari total kalori (dibagi 4 = gram)
+    // Protein: 20% dari total kalori (dibagi 4 = gram)
+    // Lemak: 30% dari total kalori (dibagi 9 = gram)
+    double carbs = (tdee * 0.50) / 4.0;
+    double protein = (tdee * 0.20) / 4.0;
+    double fat = (tdee * 0.30) / 9.0;
+
+    return {
+      'calories': tdee,
+      'carbs': carbs,
+      'fat': fat,
+      'protein': protein,
+    };
   }
 }

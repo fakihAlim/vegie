@@ -4,7 +4,7 @@ import '../../config/theme.dart';
 import '../../providers/group_provider.dart';
 
 class CreateGroupScreen extends StatefulWidget {
-  const CreateGroupScreen({Key? key}) : super(key: key);
+  const CreateGroupScreen({super.key});
 
   @override
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
@@ -67,7 +67,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentLight.withOpacity(0.5),
+                  color: AppTheme.accentLight.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(

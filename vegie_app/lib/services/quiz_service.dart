@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import '../config/constants.dart';
 import 'api_service.dart';
+
 
 class QuizService {
   final ApiService _apiService = ApiService();
@@ -12,7 +14,7 @@ class QuizService {
         return response['data'];
       }
     } catch (e) {
-      print("Error fetching daily quiz: $e");
+      debugPrint("Error fetching daily quiz: $e");
     }
     return null;
   }
@@ -27,7 +29,7 @@ class QuizService {
       );
       return response;
     } catch (e) {
-      print("Error submitting answer: $e");
+      debugPrint("Error submitting answer: $e");
     }
     return null;
   }

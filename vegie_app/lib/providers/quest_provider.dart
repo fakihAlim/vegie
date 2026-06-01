@@ -36,7 +36,7 @@ class QuestProvider with ChangeNotifier {
         return true;
       }
     } catch (e) {
-      print("Error updating quest progress: $e");
+      debugPrint("Error updating quest progress: $e");
     }
     return false;
   }

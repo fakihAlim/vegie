@@ -232,6 +232,7 @@ class FoodLogController {
         $carbs = $_POST['carbs'] ?? null;
         $fat = $_POST['fat'] ?? null;
         $protein = $_POST['protein'] ?? null;
+        $rawResponse = $_POST['raw_response'] ?? null;
 
         if (!$foodName) {
             $data = getJsonBody();
@@ -243,6 +244,7 @@ class FoodLogController {
             $carbs = $data['carbs'] ?? $log['carbs'];
             $fat = $data['fat'] ?? $log['fat'];
             $protein = $data['protein'] ?? $log['protein'];
+            $rawResponse = $data['raw_response'] ?? $data['ai_raw_response'] ?? $log['raw_response'];
         } else {
             $mealTime = $mealTime ?? $log['meal_time'];
             $category = $category ?? $log['category'];
@@ -251,6 +253,7 @@ class FoodLogController {
             $carbs = $carbs ?? $log['carbs'];
             $fat = $fat ?? $log['fat'];
             $protein = $protein ?? $log['protein'];
+            $rawResponse = $rawResponse ?? $log['raw_response'];
         }
 
         // Handle photo
@@ -275,8 +278,8 @@ class FoodLogController {
 
         if ($points === null) {
             $items = null;
-            if (!empty($log['raw_response'])) {
-                $parsedJson = json_decode($log['raw_response'], true);
+            if (!empty($rawResponse)) {
+                $parsedJson = json_decode($rawResponse, true);
                 if (is_array($parsedJson) && isset($parsedJson['items'])) {
                     $items = $parsedJson['items'];
                 }
@@ -291,9 +294,9 @@ class FoodLogController {
         }
 
         $stmt = $this->db->prepare(
-            "UPDATE food_logs SET photo = ?, food_name = ?, meal_time = ?, category = ?, nutrition_notes = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ? WHERE id = ?"
+            "UPDATE food_logs SET photo = ?, food_name = ?, meal_time = ?, category = ?, nutrition_notes = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ?, raw_response = ? WHERE id = ?"
         );
-        $stmt->execute([$photoPath, $foodName, $mealTime, $category, $nutritionNotes, $calories, $carbs, $fat, $protein, $points, $id]);
+        $stmt->execute([$photoPath, $foodName, $mealTime, $category, $nutritionNotes, $calories, $carbs, $fat, $protein, $points, $rawResponse, $id]);
 
         // Check & award badges based on behavioral milestones
         $gamification = new GamificationManager();

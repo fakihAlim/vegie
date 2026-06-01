@@ -10,7 +10,7 @@ import '../../models/badge_model.dart';
 import '../../widgets/badge_celebration_dialog.dart';
 
 class NewsScreen extends StatefulWidget {
-  const NewsScreen({Key? key}) : super(key: key);
+  const NewsScreen({super.key});
 
   @override
   State<NewsScreen> createState() => _NewsScreenState();
@@ -120,7 +120,7 @@ class _NewsScreenState extends State<NewsScreen> {
 }
 
 class DailyQuizCard extends StatefulWidget {
-  const DailyQuizCard({Key? key}) : super(key: key);
+  const DailyQuizCard({super.key});
 
   @override
   State<DailyQuizCard> createState() => _DailyQuizCardState();
@@ -166,7 +166,9 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
         // 1. Refresh AuthProvider profile and badges to update points and unlocks
         if (mounted) {
           await Provider.of<AuthProvider>(context, listen: false).init();
+          if (!mounted) return;
           await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
+          if (!mounted) return;
         }
 
         // 2. Show badge celebration dialogs if any badge was newly unlocked
@@ -208,7 +210,38 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
         }
 
         if (snapshot.hasError || snapshot.data == null) {
-          return const SizedBox.shrink();
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.check_circle_outline_rounded, size: 48, color: AppTheme.success),
+                const SizedBox(height: 12),
+                const Text(
+                  'Belum ada kuis untuk hari ini',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Kamu sudah menjawab semua kuis! Datang lagi besok ya. 🎉',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          );
         }
 
         final quiz = snapshot.data!;
@@ -240,7 +273,7 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -279,14 +312,6 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                             ),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.black54),
-                        onPressed: () {
-                          setState(() {
-                            _isClosed = true;
-                          });
-                        },
                       ),
                     ],
                   ),
@@ -355,7 +380,7 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withOpacity(0.2),
+                color: AppTheme.primary.withValues(alpha: 0.2),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               )
@@ -372,7 +397,7 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Row(
@@ -390,14 +415,6 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                           ),
                         ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white60),
-                      onPressed: () {
-                        setState(() {
-                          _isClosed = true;
-                        });
-                      },
                     ),
                   ],
                 ),
@@ -417,7 +434,7 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                   'Jawab dengan benar untuk mendapatkan +$quizPoints Poin!',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -429,9 +446,9 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: SizedBox(
+                      child: Container(
                         width: double.infinity,
-                        height: 52,
+                        constraints: const BoxConstraints(minHeight: 52),
                         child: OutlinedButton(
                           onPressed: () {
                             setState(() {
@@ -439,16 +456,16 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                             });
                           },
                           style: OutlinedButton.styleFrom(
-                            backgroundColor: isSelected ? Colors.white : Colors.white.withOpacity(0.08),
+                            backgroundColor: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.08),
                             side: BorderSide(
-                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
+                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.3),
                               width: 1.5,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                             alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           ),
                           child: Row(
                             children: [
@@ -457,7 +474,7 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                                 height: 28,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isSelected ? AppTheme.primary : Colors.white.withOpacity(0.2),
+                                  color: isSelected ? AppTheme.primary : Colors.white.withValues(alpha: 0.2),
                                   border: Border.all(
                                     color: isSelected ? Colors.transparent : Colors.white60,
                                     width: 1.5,
@@ -466,8 +483,8 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                                 child: Center(
                                   child: Text(
                                     key.toUpperCase(),
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.white,
+                                    style: const TextStyle(
+                                      color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -483,8 +500,6 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     fontSize: 14,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

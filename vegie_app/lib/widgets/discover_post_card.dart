@@ -7,7 +7,7 @@ import '../providers/group_provider.dart';
 class DiscoverPostCard extends StatelessWidget { // Error Republic diperbaiki di sini
   final dynamic post;
 
-  const DiscoverPostCard({Key? key, required this.post}) : super(key: key);
+  const DiscoverPostCard({super.key, required this.post});
 
   @override
   Widget build(BuildContext context) {

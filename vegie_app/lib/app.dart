@@ -12,7 +12,7 @@ import 'services/activity_log_service.dart';
 import 'screens/splash_screen.dart';
 
 class LovingHarmonyApp extends StatefulWidget {
-  const LovingHarmonyApp({Key? key}) : super(key: key);
+  const LovingHarmonyApp({super.key});
 
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

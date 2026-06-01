@@ -42,7 +42,7 @@ class RecipeProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      print("Error fetching recipes: $e");
+      debugPrint("Error fetching recipes: $e");
       _errorMessage = e.toString();
     }
 

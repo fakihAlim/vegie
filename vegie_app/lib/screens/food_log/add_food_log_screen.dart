@@ -15,7 +15,7 @@ import '../../services/activity_log_service.dart';
 import '../../widgets/badge_celebration_dialog.dart';
 
 class AddFoodLogScreen extends StatefulWidget {
-  const AddFoodLogScreen({Key? key}) : super(key: key);
+  const AddFoodLogScreen({super.key});
 
   @override
   State<AddFoodLogScreen> createState() => _AddFoodLogScreenState();
@@ -51,15 +51,6 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
     return 'dinner'; // 18-04
   }
 
-  String _getCategoryLabel(String category) {
-    switch (category) {
-      case 'breakfast': return '🌅 Sarapan';
-      case 'lunch': return '☀️ Makan Siang';
-      case 'dinner': return '🌙 Makan Malam';
-      case 'snack': return '🍪 Camilan';
-      default: return category;
-    }
-  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -72,6 +63,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
         setState(() => _imageFile = compressedFile);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error picking image')),
       );
@@ -95,14 +87,14 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       if (xResult != null) {
         final compressed = File(xResult.path);
         if (compressed.existsSync() && compressed.lengthSync() > 0) {
-          print('[ImageCompress] OK → ${compressed.path} (${compressed.lengthSync()} bytes)');
+          debugPrint('[ImageCompress] OK → ${compressed.path} (${compressed.lengthSync()} bytes)');
           return compressed;
         }
       }
-      print('[ImageCompress] fallback to original: ${file.path}');
+      debugPrint('[ImageCompress] fallback to original: ${file.path}');
       return file; // Fallback to original if compression fails
     } catch (e) {
-      print('[ImageCompress] error: $e — using original file');
+      debugPrint('[ImageCompress] error: $e — using original file');
       return file;
     }
   }
@@ -137,7 +129,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.1),
+                    color: AppTheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.photo_camera, color: AppTheme.primary),
@@ -153,7 +145,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withOpacity(0.1),
+                    color: AppTheme.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.photo_library, color: AppTheme.accent),
@@ -202,19 +194,19 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false, // prevent back button dismissal
+        return PopScope(
+          canPop: false, // prevent back button dismissal
           child: Dialog(
             backgroundColor: Colors.transparent,
             elevation: 0,
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   )
@@ -278,7 +270,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 24,
                   offset: const Offset(0, 10),
                 )
@@ -316,9 +308,9 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+                    border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
                   ),
                   child: Text(
                     pointText,
@@ -397,9 +389,9 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       _selectedTime.minute,
     );
 
-    print('[AddFoodLog] Photo path: ${_imageFile!.path}');
-    print('[AddFoodLog] Photo exists: ${_imageFile!.existsSync()}');
-    print('[AddFoodLog] Photo size: ${_imageFile!.lengthSync()} bytes');
+    debugPrint('[AddFoodLog] Photo path: ${_imageFile!.path}');
+    debugPrint('[AddFoodLog] Photo exists: ${_imageFile!.existsSync()}');
+    debugPrint('[AddFoodLog] Photo size: ${_imageFile!.lengthSync()} bytes');
 
     // Food name will be filled by AI on server side
     final newLog = FoodLog(
@@ -423,12 +415,16 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
 
     // Refresh AuthProvider profile to update Carbon footprint & points & badge codes
     await Provider.of<AuthProvider>(context, listen: false).init();
+    if (!mounted) return;
+    
     // Also refresh the provider's badge list
     await Provider.of<AuthProvider>(context, listen: false).refreshBadges();
+    if (!mounted) return;
 
     if (mounted) {
       // First show the points dialog (+50 or -20)
       await _showPointsDialog(context, points);
+      if (!mounted) return;
 
       // Close the AddFoodLogScreen
       Navigator.pop(context);
@@ -468,7 +464,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
               child: Container(
                 height: 220,
                 decoration: BoxDecoration(
-                  color: AppTheme.accentLight.withOpacity(0.5),
+                  color: AppTheme.accentLight.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _imageFile != null ? AppTheme.success : AppTheme.primaryLight, 
@@ -488,7 +484,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.camera_alt_rounded, size: 40, color: AppTheme.primary),

@@ -32,7 +32,7 @@ class GroupProvider with ChangeNotifier {
         _discoverPosts = response['data']; 
       }
     } catch (e) {
-      print("Error fetch discover: $e");
+      debugPrint("Error fetch discover: $e");
     }
     _isLoadingDiscover = false;
     notifyListeners();
@@ -61,7 +61,7 @@ class GroupProvider with ChangeNotifier {
     try {
       await _apiService.post('/groups/discover/like', {'food_log_id': foodLogId}, requireAuth: true);
     } catch (e) {
-      print("Error toggling like: $e");
+      debugPrint("Error toggling like: $e");
     }
   } // <-- 5. Tutup kurung kurawal yang sebelumnya hilang ditambahkan di sini
 

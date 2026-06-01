@@ -8,7 +8,7 @@ import '../screens/news/news_detail_screen.dart';
 class NewsCard extends StatelessWidget {
   final News news;
 
-  const NewsCard({Key? key, required this.news}) : super(key: key);
+  const NewsCard({super.key, required this.news});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class NewsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -34,8 +34,8 @@ class NewsCard extends StatelessWidget {
               context,
               PageRouteBuilder(
                 transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (_, __, ___) => NewsDetailScreen(news: news),
-                transitionsBuilder: (_, animation, __, child) {
+                pageBuilder: (_, _, _) => NewsDetailScreen(news: news),
+                transitionsBuilder: (_, animation, _, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
               ),
@@ -71,9 +71,9 @@ class NewsCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
@@ -153,7 +153,7 @@ class NewsCard extends StatelessWidget {
       height: 200,
       width: double.infinity,
       color: AppTheme.accentLight,
-      child: Icon(Icons.article_outlined, size: 64, color: AppTheme.primary.withOpacity(0.3)),
+      child: Icon(Icons.article_outlined, size: 64, color: AppTheme.primary.withValues(alpha: 0.3)),
     );
   }
 }

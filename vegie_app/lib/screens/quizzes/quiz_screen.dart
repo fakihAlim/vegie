@@ -4,7 +4,7 @@ import '../../config/theme.dart';
 
 class QuizScreen extends StatelessWidget {
   final int quizId;
-  const QuizScreen({Key? key, required this.quizId}) : super(key: key);
+  const QuizScreen({super.key, required this.quizId});
 
   @override
   Widget build(BuildContext context) {

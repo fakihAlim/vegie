@@ -8,11 +8,11 @@ class MonthCalendar extends StatefulWidget {
   final bool Function(DateTime) hasLogs;
 
   const MonthCalendar({
-    Key? key,
+    super.key,
     required this.selectedDate,
     required this.onDateSelected,
     required this.hasLogs,
-  }) : super(key: key);
+  });
 
   @override
   State<MonthCalendar> createState() => _MonthCalendarState();
@@ -81,7 +81,7 @@ class _MonthCalendarState extends State<MonthCalendar> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -220,7 +220,7 @@ class _MonthCalendarState extends State<MonthCalendar> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary : (isToday ? AppTheme.primaryLight.withOpacity(0.2) : Colors.transparent),
+              color: isSelected ? AppTheme.primary : (isToday ? AppTheme.primaryLight.withValues(alpha: 0.2) : Colors.transparent),
               shape: BoxShape.circle,
               border: isToday && !isSelected ? Border.all(color: AppTheme.primaryLight) : null,
             ),

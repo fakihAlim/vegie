@@ -20,7 +20,7 @@ class BadgeCelebrationDialog {
   static Future<void> show(BuildContext context, BadgeModel badge) {
     return showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.65),
+      barrierColor: Colors.black.withValues(alpha: 0.65),
       barrierDismissible: false,
       builder: (_) => _BadgeCelebrationDialogContent(badge: badge),
     );
@@ -101,7 +101,7 @@ class _BadgeCelebrationDialogContentState
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.5),
+            color: AppTheme.primary.withValues(alpha: 0.5),
             blurRadius: 32,
             spreadRadius: 4,
             offset: const Offset(0, 8),
@@ -121,7 +121,7 @@ class _BadgeCelebrationDialogContentState
                 height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                 ),
               ),
             ),
@@ -133,7 +133,7 @@ class _BadgeCelebrationDialogContentState
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                 ),
               ),
             ),
@@ -148,9 +148,9 @@ class _BadgeCelebrationDialogContentState
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.25)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -193,7 +193,7 @@ class _BadgeCelebrationDialogContentState
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: Colors.white.withOpacity(0.80),
+                      color: Colors.white.withValues(alpha: 0.80),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -203,9 +203,9 @@ class _BadgeCelebrationDialogContentState
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.20)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
                     ),
                     child: Column(
                       children: [
@@ -224,7 +224,7 @@ class _BadgeCelebrationDialogContentState
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 13,
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             height: 1.45,
                           ),
                         ),
@@ -277,7 +277,7 @@ class _BadgeCelebrationDialogContentState
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withOpacity(0.25),
+            color: const Color(0xFFFFD700).withValues(alpha: 0.25),
             blurRadius: 40,
             spreadRadius: 10,
           ),
@@ -309,8 +309,8 @@ class _BadgeCelebrationDialogContentState
       height: 200,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.15),
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+        color: Colors.white.withValues(alpha: 0.15),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
       ),
       child: const Icon(
         Icons.military_tech_rounded,

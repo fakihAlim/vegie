@@ -10,7 +10,7 @@ import '../../services/activity_log_service.dart';
 class NewsDetailScreen extends StatefulWidget {
   final News news; // Kirim object utuh dari list
 
-  const NewsDetailScreen({Key? key, required this.news}) : super(key: key);
+  const NewsDetailScreen({super.key, required this.news});
 
   @override
   State<NewsDetailScreen> createState() => _NewsDetailScreenState();
@@ -71,7 +71,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             ),
                             errorWidget: (context, url, error) => Container(
                               color: AppTheme.accentLight,
-                              child: Icon(Icons.article, size: 80, color: AppTheme.primary.withOpacity(0.3)),
+                              child: Icon(Icons.article, size: 80, color: AppTheme.primary.withValues(alpha: 0.3)),
                             ),
                           ),
                           const DecoratedBox(
@@ -90,7 +90,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                       )
                     : Container(
                         color: AppTheme.accentLight,
-                        child: Icon(Icons.article, size: 80, color: AppTheme.primary.withOpacity(0.3)),
+                        child: Icon(Icons.article, size: 80, color: AppTheme.primary.withValues(alpha: 0.3)),
                       ),
               ),
             ),

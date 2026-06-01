@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/constants.dart';
 import '../models/user.dart';
@@ -120,6 +122,7 @@ class AuthService {
     required double weight,
     required double height,
     required String photo,
+    String? gender,
   }) async {
     try {
       final response = await _apiService.post(
@@ -130,11 +133,12 @@ class AuthService {
           'weight': weight,
           'height': height,
           'photo': photo,
+          'gender': gender,
         },
       );
       return response['success'] == true;
     } catch (e) {
-      print("Submit onboarding error: $e");
+      debugPrint("Submit onboarding error: $e");
       return false;
     }
   }
@@ -146,6 +150,7 @@ class AuthService {
     double? weight,
     double? height,
     String? photo,
+    String? gender,
   }) async {
     try {
       final Map<String, dynamic> data = {};
@@ -155,6 +160,7 @@ class AuthService {
       if (weight != null) data['weight'] = weight;
       if (height != null) data['height'] = height;
       if (photo != null) data['photo'] = photo;
+      if (gender != null) data['gender'] = gender;
 
       final response = await _apiService.post(
         Constants.endpointProfile,
@@ -168,7 +174,7 @@ class AuthService {
         return User.fromJson(userData);
       }
     } catch (e) {
-      print("Update profile error: $e");
+      debugPrint("Update profile error: $e");
     }
     return null;
   }

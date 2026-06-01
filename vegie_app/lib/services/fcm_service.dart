@@ -21,12 +21,12 @@ class FCMService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      debugPrint('User granted permission');
       
       // Get the token
       String? token = await _fcm.getToken();
       if (token != null) {
-        print("FCM Token: $token");
+        debugPrint("FCM Token: $token");
         _sendTokenToServer(token);
       }
     }
@@ -36,7 +36,7 @@ class FCMService {
 
     // Handle being in foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("Foreground message: ${message.notification?.title}");
+      debugPrint("Foreground message: ${message.notification?.title}");
       // You could show a local notification here if needed
     });
 
@@ -54,7 +54,7 @@ class FCMService {
   }
 
   static void _handleNotificationClick(RemoteMessage message) {
-    print("Notification clicked with data: ${message.data}");
+    debugPrint("Notification clicked with data: ${message.data}");
     
     final String? type = message.data['target_type'];
     final String? idStr = message.data['target_id'];
@@ -66,7 +66,7 @@ class FCMService {
 
     final navigatorState = LovingHarmonyApp.navigatorKey.currentState;
     if (navigatorState == null) {
-      print("NavigatorState is null, cannot perform deep link");
+      debugPrint("NavigatorState is null, cannot perform deep link");
       return;
     }
 
@@ -102,10 +102,10 @@ class FCMService {
     try {
       if (await _authService.isLoggedIn()) {
         await _authService.registerFcmToken(token);
-        print("FCM Token registered successfully");
+        debugPrint("FCM Token registered successfully");
       }
     } catch (e) {
-      print("Error registering FCM token: $e");
+      debugPrint("Error registering FCM token: $e");
     }
   }
 }

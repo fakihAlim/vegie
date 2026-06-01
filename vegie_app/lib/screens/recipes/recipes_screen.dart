@@ -6,7 +6,7 @@ import '../../models/recipe.dart';
 import '../../widgets/recipe_card.dart';
 
 class RecipesScreen extends StatefulWidget {
-  const RecipesScreen({Key? key}) : super(key: key);
+  const RecipesScreen({super.key});
 
   @override
   State<RecipesScreen> createState() => _RecipesScreenState();

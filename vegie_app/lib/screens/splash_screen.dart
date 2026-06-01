@@ -9,7 +9,7 @@ import 'home/home_screen.dart';
 import '../../config/theme.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -36,6 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (authProvider.isAuthenticated) {
       final prefs = await SharedPreferences.getInstance();
       final bool onboardingCompleted = prefs.getBool(Constants.keyOnboardingCompleted) ?? false;
+      if (!mounted) return;
 
       if (onboardingCompleted) {
         Navigator.pushReplacement(
@@ -79,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Center(

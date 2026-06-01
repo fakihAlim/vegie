@@ -9,7 +9,7 @@ import 'join_group_screen.dart';
 import 'group_detail_screen.dart';
 
 class GroupListScreen extends StatefulWidget {
-  const GroupListScreen({Key? key}) : super(key: key);
+  const GroupListScreen({super.key});
 
   @override
   State<GroupListScreen> createState() => _GroupListScreenState();
@@ -132,7 +132,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.accentLight.withOpacity(0.5),
+                color: AppTheme.accentLight.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.people_outline, size: 64, color: AppTheme.primary),
@@ -184,7 +184,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -202,6 +202,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
                 builder: (_) => GroupDetailScreen(groupId: group.id, groupName: group.name),
               ),
             ).then((_) {
+              if (!context.mounted) return;
               Provider.of<GroupProvider>(context, listen: false).fetchGroups();
             });
           },
@@ -291,6 +292,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
       context,
       MaterialPageRoute(builder: (_) => const CreateGroupScreen()),
     ).then((_) {
+      if (!context.mounted) return;
       Provider.of<GroupProvider>(context, listen: false).fetchGroups();
     });
   }
@@ -300,6 +302,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
       context,
       MaterialPageRoute(builder: (_) => const JoinGroupScreen()),
     ).then((_) {
+      if (!context.mounted) return;
       Provider.of<GroupProvider>(context, listen: false).fetchGroups();
     });
   }

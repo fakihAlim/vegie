@@ -42,7 +42,7 @@ class NewsProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      print("Error fetching news: $e");
+      debugPrint("Error fetching news: $e");
       _errorMessage = e.toString();
     }
 

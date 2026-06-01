@@ -9,13 +9,13 @@ import '../../providers/food_log_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
+import '../../models/user.dart';
 import '../../services/activity_log_service.dart';
 import '../../widgets/month_calendar.dart';
-import 'add_food_log_screen.dart';
 import 'edit_food_log_screen.dart';
 
 class FoodLogScreen extends StatefulWidget {
-  const FoodLogScreen({Key? key}) : super(key: key);
+  const FoodLogScreen({super.key});
 
   @override
   State<FoodLogScreen> createState() => _FoodLogScreenState();
@@ -84,7 +84,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                         onDateSelected: provider.selectDate,
                         hasLogs: provider.hasLogsOnDate,
                       ),
-                      _buildDailyNutritionSummary(provider),
+                      _buildDailyNutritionSummary(provider, user),
                       const SizedBox(height: 16),
                       _buildQuoteCard(provider),
                       const Divider(height: 32, thickness: 1),
@@ -149,7 +149,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
     );
   }
 
-  Widget _buildDailyNutritionSummary(FoodLogProvider provider) {
+  Widget _buildDailyNutritionSummary(FoodLogProvider provider, User? user) {
     double totalCarbs = 0;
     double totalFat = 0;
     double totalProtein = 0;
@@ -164,6 +164,18 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
 
     if (totalCalories == 0) return const SizedBox.shrink();
 
+    final targets = user?.calculateDailyNutritionTargets() ?? {
+      'calories': 2000.0,
+      'carbs': 250.0,
+      'fat': 66.7,
+      'protein': 100.0,
+    };
+
+    final targetCalories = targets['calories'] ?? 2000.0;
+    final targetCarbs = targets['carbs'] ?? 250.0;
+    final targetFat = targets['fat'] ?? 66.7;
+    final targetProtein = targets['protein'] ?? 100.0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -171,7 +183,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -182,10 +194,10 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNutritionCircle('Kalori', totalCalories, Colors.blue, 'kcal', isInt: true),
-              _buildNutritionCircle('Karbo', totalCarbs, Colors.orange, 'g'),
-              _buildNutritionCircle('Lemak', totalFat, Colors.yellow.shade700, 'g'),
-              _buildNutritionCircle('Protein', totalProtein, Colors.red.shade400, 'g'),
+              _buildNutritionCircle('Kalori', totalCalories, targetCalories, Colors.blue, 'kcal', isInt: true),
+              _buildNutritionCircle('Karbo', totalCarbs, targetCarbs, Colors.orange, 'g'),
+              _buildNutritionCircle('Lemak', totalFat, targetFat, Colors.yellow.shade700, 'g'),
+              _buildNutritionCircle('Protein', totalProtein, targetProtein, Colors.red.shade400, 'g'),
             ],
           ),
         ],
@@ -193,8 +205,10 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
     );
   }
 
-  Widget _buildNutritionCircle(String label, double value, Color color, String unit, {bool isInt = false}) {
+  Widget _buildNutritionCircle(String label, double value, double target, Color color, String unit, {bool isInt = false}) {
     final displayValue = isInt ? value.toInt().toString() : value.toStringAsFixed(1);
+    final displayTarget = isInt ? target.toInt().toString() : target.toStringAsFixed(0);
+    final progressValue = target > 0 ? (value / target).clamp(0.0, 1.0) : 0.0;
     
     return Column(
       children: [
@@ -207,14 +221,14 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
               child: CircularProgressIndicator(
                 value: 1.0,
                 strokeWidth: 4,
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
               ),
             ),
             SizedBox(
               width: 60,
               height: 60,
               child: CircularProgressIndicator(
-                value: value > 0 ? 0.75 : 0.0, // Just a visual indicator
+                value: progressValue,
                 strokeWidth: 4,
                 color: color,
               ),
@@ -224,11 +238,11 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
               children: [
                 Text(
                   displayValue,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -237,56 +251,19 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade800, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade800, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '/$displayTarget$unit',
+          style: TextStyle(fontSize: 9, color: Colors.grey.shade500, fontWeight: FontWeight.normal),
         ),
       ],
     );
   }
 
-  Widget _buildHeaderStats(int streak) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildStatCard(
-            icon: Icons.bolt,
-            iconColor: Colors.orange,
-            value: '$streak hari',
-            label: 'Streak',
-          ),
-          _buildStatCard(
-            icon: Icons.people,
-            iconColor: Colors.blue,
-            value: '0',
-            label: 'Notifikasi Grup',
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildStatCard({required IconData icon, required Color iconColor, required String value, required String label}) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 32),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-        ],
-      ),
-    );
-  }
+
 
   // Calendar logic moved to MonthCalendar widget
 
@@ -304,9 +281,9 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5)),
         ],
-        border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
       ),
       child: Stack(
         children: [
@@ -384,7 +361,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                         color: Colors.grey.shade200,
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4),
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
                         ],
                       ),
                       clipBehavior: Clip.antiAlias,
@@ -421,9 +398,11 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                   onPressed: () async {
                                     final provider = Provider.of<FoodLogProvider>(context, listen: false);
                                     final success = await provider.toggleShareLog(log);
+                                    if (!mounted) return;
                                     if (success) {
                                       // Refresh Discover Feed in background
                                       Provider.of<GroupProvider>(context, listen: false).fetchDiscoverFeed();
+                                      if (!mounted) return;
                                       
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
@@ -601,7 +580,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                 ),
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 8),
           Divider(height: 1, color: Colors.blue.shade100),
           const SizedBox(height: 8),
@@ -718,9 +697,9 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         category.toUpperCase(),
@@ -737,9 +716,9 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
