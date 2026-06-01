@@ -62,7 +62,11 @@ $users = $stmt->fetchAll();
                                                         <?= strtoupper(substr($user['name'], 0, 1)) ?>
                                                     </div>
                                                     <div>
-                                                        <strong><?= htmlspecialchars($user['name']) ?></strong>
+                                                        <strong>
+                                                            <a href="detail.php?id=<?= $user['id'] ?>" style="color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px dashed transparent; transition: var(--transition);" onmouseover="this.style.color='var(--primary-dark)'; this.style.borderBottomColor='var(--primary-dark)';" onmouseout="this.style.color='var(--primary)'; this.style.borderBottomColor='transparent';">
+                                                                <?= htmlspecialchars($user['name']) ?>
+                                                            </a>
+                                                        </strong>
                                                         <?php if ($user['bio']): ?>
                                                             <br><small class="text-muted"><?= mb_substr($user['bio'], 0, 40) ?></small>
                                                         <?php endif; ?>
