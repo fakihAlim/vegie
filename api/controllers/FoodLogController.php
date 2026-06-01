@@ -264,25 +264,41 @@ class FoodLogController {
             }
         }
 
-        $items = null;
-        if (!empty($log['raw_response'])) {
-            $parsedJson = json_decode($log['raw_response'], true);
-            if (is_array($parsedJson) && isset($parsedJson['items'])) {
-                $items = $parsedJson['items'];
+        $points = null;
+        if (isset($_POST['points'])) {
+            $points = (int) $_POST['points'];
+        } else {
+            $data = getJsonBody();
+            if (isset($data['points'])) {
+                $points = (int) $data['points'];
             }
         }
 
-        // Recalculate based purely on name if edited
-        if (strtolower(trim($foodName)) !== strtolower(trim($log['food_name']))) {
+        if ($points === null) {
             $items = null;
-        }
+            if (!empty($log['raw_response'])) {
+                $parsedJson = json_decode($log['raw_response'], true);
+                if (is_array($parsedJson) && isset($parsedJson['items'])) {
+                    $items = $parsedJson['items'];
+                }
+            }
 
-        $points = $this->calculateFoodLogPoints($foodName, $items);
+            // Recalculate based purely on name if edited
+            if (strtolower(trim($foodName)) !== strtolower(trim($log['food_name']))) {
+                $items = null;
+            }
+
+            $points = $this->calculateFoodLogPoints($foodName, $items);
+        }
 
         $stmt = $this->db->prepare(
             "UPDATE food_logs SET photo = ?, food_name = ?, meal_time = ?, category = ?, nutrition_notes = ?, calories = ?, carbs = ?, fat = ?, protein = ?, points = ? WHERE id = ?"
         );
         $stmt->execute([$photoPath, $foodName, $mealTime, $category, $nutritionNotes, $calories, $carbs, $fat, $protein, $points, $id]);
+
+        // Check & award badges based on behavioral milestones
+        $gamification = new GamificationManager();
+        $newlyUnlockedBadges = $gamification->checkAndAwardBadges($userId);
 
         jsonSuccess([
             'id' => (int) $id,
@@ -296,6 +312,7 @@ class FoodLogController {
             'fat' => $fat !== null ? (float) $fat : null,
             'protein' => $protein !== null ? (float) $protein : null,
             'points' => (int) $points,
+            'newly_unlocked_badges' => $newlyUnlockedBadges,
         ], 'Food log updated successfully');
     }
 
@@ -474,41 +491,47 @@ class FoodLogController {
         $auth = authenticate();
         $userId = $auth['user_id'];
 
-        // Get distinct dates with food logs, ordered descending
-        $stmt = $this->db->prepare(
-            "SELECT DISTINCT DATE(meal_time) as log_date 
-             FROM food_logs 
-             WHERE user_id = ? 
-             ORDER BY log_date DESC"
-        );
+        // Get dates with food logs and their minimum points, ordered descending
+        $stmt = $this->db->prepare("
+            SELECT DATE(meal_time) AS log_date, MIN(points) AS min_points
+            FROM food_logs
+            WHERE user_id = ?
+            GROUP BY log_date
+            ORDER BY log_date DESC
+        ");
         $stmt->execute([$userId]);
-        $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (empty($dates)) {
+        if (empty($rows)) {
             jsonSuccess(['streak' => 0, 'dates' => []]);
             return;
         }
 
-        $today = new DateTime('today');
-        $yesterday = new DateTime('yesterday');
-        $firstLogDate = new DateTime($dates[0]);
-
-        // Streak must start from today or yesterday
-        if ($firstLogDate != $today && $firstLogDate != $yesterday) {
-            jsonSuccess(['streak' => 0, 'dates' => $dates]);
-            return;
+        $dateMap = [];
+        $dates = [];
+        foreach ($rows as $row) {
+            $dateMap[$row['log_date']] = (int)$row['min_points'];
+            $dates[] = $row['log_date'];
         }
 
-        $streak = 1;
-        for ($i = 1; $i < count($dates); $i++) {
-            $current = new DateTime($dates[$i - 1]);
-            $previous = new DateTime($dates[$i]);
-            $diff = $current->diff($previous)->days;
+        $todayStr = (new DateTime('today'))->format('Y-m-d');
+        $yesterdayStr = (new DateTime('yesterday'))->format('Y-m-d');
 
-            if ($diff === 1) {
-                $streak++;
-            } else {
-                break;
+        $streak = 0;
+        if (isset($dateMap[$todayStr]) || isset($dateMap[$yesterdayStr])) {
+            $currentDate = isset($dateMap[$todayStr]) ? new DateTime('today') : new DateTime('yesterday');
+            
+            while (true) {
+                $dateStr = $currentDate->format('Y-m-d');
+                if (isset($dateMap[$dateStr])) {
+                    if ($dateMap[$dateStr] < 50) {
+                        break; // Animal-based log resets streak!
+                    }
+                    $streak++;
+                    $currentDate->modify('-1 day');
+                } else {
+                    break;
+                }
             }
         }
 

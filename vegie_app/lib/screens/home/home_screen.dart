@@ -6,10 +6,10 @@ import '../../providers/auth_provider.dart';
 
 // Import Screen Tabs
 import '../food_log/food_log_screen.dart';
-import '../news/news_screen.dart';
-import '../recipes/recipes_screen.dart';
-import '../groups/group_list_screen.dart';
+import '../insights/insights_screen.dart';
+import '../discover/discover_screen.dart';
 import '../auth/profile_screen.dart';
+import '../food_log/add_food_log_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
@@ -33,18 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
     String screenName = '';
     switch (index) {
       case 0:
-        screenName = 'FoodLogScreen';
+        screenName = 'DashboardScreen';
         break;
       case 1:
-        screenName = 'NewsScreen';
+        screenName = 'InsightsScreen';
         break;
       case 2:
-        screenName = 'RecipesScreen';
+        screenName = 'DiscoverScreen';
         break;
       case 3:
-        screenName = 'GroupListScreen';
-        break;
-      case 4:
         screenName = 'ProfileScreen';
         break;
     }
@@ -53,74 +50,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Fungsi untuk menampilkan tab Komunitas (Groups)
-  // Di sinilah logika "Feature Locking" dan pesan Empatik bekerja!
-  Widget _buildGroupTab(bool isLocked) {
-    if (isLocked) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.ac_unit, size: 80, color: Colors.blueGrey), // Ikon beku
-              const SizedBox(height: 24),
-              Text(
-                "Selamat datang kembali!",
-                style: TextStyle(
-                  fontSize: 22, 
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Rencana beberapa hari lalu mungkin terlalu padat.\nStreak Anda sedang dibekukan sementara untuk melindunginya.\n\nMari susun ulang menu hari ini. Catat 1 porsi buah atau sayur di Food Log untuk mencairkan streak dan membuka kembali fitur Komunitas ini!",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textSecondary, height: 1.5),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Arahkan user kembali ke tab Food Log
-                  setState(() => _currentIndex = 0);
-                },
-                icon: const Icon(Icons.camera_alt),
-                label: const Text("Catat Makanan Sekarang"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-              )
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Jika tidak terkunci, tampilkan halaman Groups/Komunitas normal
-    return const GroupListScreen();
-  }
-
   @override
   Widget build(BuildContext context) {
     // 1. Ambil data user dari Provider
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
     
-    // 2. Baca status (Jika model user belum punya field ini, default ke false)
-    // Pastikan di file models/user.dart sudah ada penanganan nilai default untuk ttmStage dan isFeatureLocked
-    // final String currentStage = user?.ttmStage ?? 'precontemplation';
-    // Anggap isLocked dibaca dari API (ubah ke user?.isFeatureLocked jika model sudah siap)
+    // Feature Locking Check (diaplikasikan di tab Discover sekarang)
     final bool isLocked = user?.isFeatureLocked ?? false;
 
-    // 3. Susun ulang _screens dengan menyisipkan logika adaptif
+    // 3. Susun ulang screens
     final List<Widget> screens = [
-      const FoodLogScreen(),  // Tab 0: Selalu tampil agar user bisa lepas dari status 'locked'
-      const NewsScreen(),     // Tab 1
-      const RecipesScreen(),  // Tab 2
-      _buildGroupTab(isLocked), // Tab 3: Terapkan Feature Locking di sini
-      const ProfileScreen(),  // Tab 4
+      const FoodLogScreen(),  // Tab 0: Dashboard (Sebelumnya FoodLogScreen)
+      const InsightsScreen(), // Tab 1: Insights (Myth, News, Recipes)
+      const DiscoverScreen(), // Tab 2: Discover (Misi, Kuis, Groups) - Nanti bisa ditambahkan buildGroupTab
+      const ProfileScreen(),  // Tab 3: Profile
     ];
 
     return Scaffold(
@@ -128,55 +72,96 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddFoodLogScreen()),
+          );
+        },
+        backgroundColor: AppTheme.primary,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        color: AppTheme.surface,
+        elevation: 10,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTabItem(
+                index: 0,
+                icon: Icons.dashboard_outlined,
+                activeIcon: Icons.dashboard,
+                label: 'Dashboard',
+              ),
+              _buildTabItem(
+                index: 1,
+                icon: Icons.lightbulb_outline,
+                activeIcon: Icons.lightbulb,
+                label: 'Insights',
+              ),
+              const SizedBox(width: 48), // Ruang kosong untuk FAB
+              _buildTabItem(
+                index: 2,
+                icon: isLocked ? Icons.lock_outline : Icons.explore_outlined,
+                activeIcon: isLocked ? Icons.lock : Icons.explore,
+                label: 'Discover',
+                iconColor: isLocked ? Colors.redAccent : null,
+              ),
+              _buildTabItem(
+                index: 3,
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() => _currentIndex = index);
-            _logTabChange(index);
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppTheme.surface,
-          selectedItemColor: AppTheme.primary,
-          unselectedItemColor: AppTheme.textSecondary,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_menu),
-              label: 'Food Log',
+      ),
+    );
+  }
+
+  Widget _buildTabItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    Color? iconColor,
+  }) {
+    final isSelected = _currentIndex == index;
+    final color = isSelected ? AppTheme.primary : AppTheme.textSecondary;
+
+    return InkWell(
+      onTap: () {
+        setState(() => _currentIndex = index);
+        _logTabChange(index);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isSelected ? activeIcon : icon,
+            color: iconColor ?? color,
+            size: 24,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              activeIcon: Icon(Icons.article),
-              label: 'News',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_outlined),
-              activeIcon: Icon(Icons.menu_book),
-              label: 'Recipes',
-            ),
-            // Berikan tanda visual (gembok) di ikon tab jika sedang terkunci
-            BottomNavigationBarItem(
-              icon: isLocked ? const Icon(Icons.lock_outline, color: Colors.redAccent) : const Icon(Icons.people_outline),
-              activeIcon: isLocked ? const Icon(Icons.lock, color: Colors.redAccent) : const Icon(Icons.people),
-              label: 'Groups',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

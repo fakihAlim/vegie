@@ -85,6 +85,8 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                         onDateSelected: provider.selectDate,
                         hasLogs: provider.hasLogsOnDate,
                       ),
+                      _buildDailyNutritionSummary(provider),
+                      const SizedBox(height: 16),
                       _buildQuoteCard(provider),
                       const Divider(height: 32, thickness: 1),
                       Padding(
@@ -122,17 +124,6 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'foodLogFab',
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddFoodLogScreen()),
-          );
-        },
-      ),
     );
   }
 
@@ -151,11 +142,105 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap the + button to add a vegetarian meal!',
+            'Tap the camera button to add a meal!',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDailyNutritionSummary(FoodLogProvider provider) {
+    double totalCarbs = 0;
+    double totalFat = 0;
+    double totalProtein = 0;
+    double totalCalories = 0;
+
+    for (var log in provider.filteredLogs) {
+      totalCarbs += log.carbs ?? 0;
+      totalFat += log.fat ?? 0;
+      totalProtein += log.protein ?? 0;
+      totalCalories += log.calories ?? 0;
+    }
+
+    if (totalCalories == 0) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Total Nutrisi Hari Ini', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNutritionCircle('Kalori', totalCalories, Colors.blue, 'kcal', isInt: true),
+              _buildNutritionCircle('Karbo', totalCarbs, Colors.orange, 'g'),
+              _buildNutritionCircle('Lemak', totalFat, Colors.yellow.shade700, 'g'),
+              _buildNutritionCircle('Protein', totalProtein, Colors.red.shade400, 'g'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionCircle(String label, double value, Color color, String unit, {bool isInt = false}) {
+    final displayValue = isInt ? value.toInt().toString() : value.toStringAsFixed(1);
+    
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: CircularProgressIndicator(
+                value: 1.0,
+                strokeWidth: 4,
+                color: color.withOpacity(0.2),
+              ),
+            ),
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: CircularProgressIndicator(
+                value: value > 0 ? 0.75 : 0.0, // Just a visual indicator
+                strokeWidth: 4,
+                color: color,
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  displayValue,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  unit,
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade800, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 

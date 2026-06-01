@@ -534,51 +534,6 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Auto-detected Category
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.auto_awesome, size: 18, color: AppTheme.primary),
-                      const SizedBox(width: 8),
-                      const Text('Kategori Otomatis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    children: ['breakfast', 'lunch', 'dinner', 'snack'].map((cat) {
-                      final isSelected = _selectedCategory == cat;
-                      return ChoiceChip(
-                        label: Text(_getCategoryLabel(cat)),
-                        selected: isSelected,
-                        selectedColor: AppTheme.primary.withOpacity(0.2),
-                        labelStyle: TextStyle(
-                          color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                        onSelected: (selected) {
-                          if (selected) setState(() => _selectedCategory = cat);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            
             // Date & Time
             Row(
               children: [
@@ -628,29 +583,6 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
             ),
             const SizedBox(height: 12),
 
-            // AI Info Banner
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.auto_awesome, color: Colors.blue.shade700, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'AI akan otomatis mengenali makanan dan menghitung kalori, karbohidrat, lemak, dan protein dari foto.',
-                      style: TextStyle(color: Colors.blue.shade700, fontSize: 12, height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
             // Save Button
             ElevatedButton.icon(
               onPressed: _isSaving ? null : _save,

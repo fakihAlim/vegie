@@ -28,6 +28,7 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
   late TextEditingController _proteinController;
   late TextEditingController _notesController;
 
+  late bool _isPlantBased;
   bool _isSaving = false;
 
   @override
@@ -43,6 +44,7 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
     _fatController = TextEditingController(text: widget.log.fat?.toString() ?? '');
     _proteinController = TextEditingController(text: widget.log.protein?.toString() ?? '');
     _notesController = TextEditingController(text: widget.log.nutritionNotes ?? '');
+    _isPlantBased = widget.log.points == 50;
   }
 
   @override
@@ -68,6 +70,7 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
       fat: double.tryParse(_fatController.text),
       protein: double.tryParse(_proteinController.text),
       nutritionNotes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      points: _isPlantBased ? 50 : -20,
       isSynced: false, // Mark as unsynced so it will push to server
     );
     
@@ -180,6 +183,144 @@ class _EditFoodLogScreenState extends State<EditFoodLogScreen> {
                       prefixIcon: Icon(Icons.restaurant_menu),
                     ),
                     validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Status Makanan Toggle Container
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _isPlantBased ? AppTheme.success.withOpacity(0.3) : AppTheme.warning.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _isPlantBased ? Icons.eco_rounded : Icons.warning_amber_rounded,
+                              size: 20,
+                              color: _isPlantBased ? AppTheme.success : AppTheme.warning,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Status Makanan',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() => _isPlantBased = true);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _isPlantBased 
+                                        ? AppTheme.success.withOpacity(0.1) 
+                                        : Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _isPlantBased ? AppTheme.success : Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.spa_rounded,
+                                        color: _isPlantBased ? AppTheme.success : Colors.grey,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Nabati (Plant-Based)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: _isPlantBased ? FontWeight.bold : FontWeight.normal,
+                                          color: _isPlantBased ? AppTheme.success : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '+50 Poin',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: _isPlantBased ? AppTheme.success : Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() => _isPlantBased = false);
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: !_isPlantBased 
+                                        ? AppTheme.warning.withOpacity(0.1) 
+                                        : Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: !_isPlantBased ? AppTheme.warning : Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.kebab_dining_rounded,
+                                        color: !_isPlantBased ? AppTheme.warning : Colors.grey,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Non-Nabati (Hewani)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: !_isPlantBased ? FontWeight.bold : FontWeight.normal,
+                                          color: !_isPlantBased ? AppTheme.warning : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '-20 Poin',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: !_isPlantBased ? AppTheme.warning : Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   

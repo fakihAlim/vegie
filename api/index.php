@@ -292,6 +292,31 @@ try {
             }
             break;
 
+        case 'quests':
+            require_once __DIR__ . '/controllers/QuestController.php';
+            $controller = new QuestController();
+            $id = $segments[1] ?? null;
+
+            if ($id && isset($segments[2]) && $segments[2] === 'progress' && $method === 'POST') {
+                $controller->updateProgress();
+            } elseif (!$id && $method === 'GET') {
+                $controller->index();
+            } else {
+                jsonError('Quest endpoint not found', 404);
+            }
+            break;
+
+        case 'myths':
+            require_once __DIR__ . '/controllers/MythFactController.php';
+            $controller = new MythFactController();
+            
+            if ($method === 'GET') {
+                $controller->index();
+            } else {
+                jsonError('Myths endpoint not found', 404);
+            }
+            break;
+
         default:
             jsonError('Resource not found', 404);
 

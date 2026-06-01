@@ -40,6 +40,7 @@ class SyncService {
                 'category': log.category,
                 'meal_time': log.mealTime.toIso8601String(),
                 if (log.nutritionNotes != null) 'nutrition_notes': log.nutritionNotes!,
+                'points': log.points.toString(),
               },
               'photo',
               log.photoPath,

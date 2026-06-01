@@ -151,30 +151,38 @@ class BadgeController {
 
             case 'streak':
                 $stmt = $this->db->prepare("
-                    SELECT DISTINCT DATE(meal_time) AS log_date
+                    SELECT DATE(meal_time) AS log_date, MIN(points) AS min_points
                     FROM food_logs
                     WHERE user_id = ?
+                    GROUP BY log_date
                     ORDER BY log_date DESC
                 ");
                 $stmt->execute([$userId]);
-                $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 $streak = 0;
-                if (!empty($dates)) {
-                    $today = new DateTime();
-                    $yesterday = new DateTime('-1 day');
-                    $lastLogDate = new DateTime($dates[0]);
-                    
-                    if ($lastLogDate->format('Y-m-d') === $today->format('Y-m-d') || 
-                        $lastLogDate->format('Y-m-d') === $yesterday->format('Y-m-d')) {
-                        $streak = 1;
-                        for ($i = 0; $i < count($dates) - 1; $i++) {
-                            $curr = new DateTime($dates[$i]);
-                            $next = new DateTime($dates[$i + 1]);
-                            if ($curr->diff($next)->days === 1) {
-                                    $streak++;
+                if (!empty($rows)) {
+                    $dateMap = [];
+                    foreach ($rows as $row) {
+                        $dateMap[$row['log_date']] = (int)$row['min_points'];
+                    }
+
+                    $todayStr = (new DateTime('today'))->format('Y-m-d');
+                    $yesterdayStr = (new DateTime('yesterday'))->format('Y-m-d');
+
+                    if (isset($dateMap[$todayStr]) || isset($dateMap[$yesterdayStr])) {
+                        $currentDate = isset($dateMap[$todayStr]) ? new DateTime('today') : new DateTime('yesterday');
+                        
+                        while (true) {
+                            $dateStr = $currentDate->format('Y-m-d');
+                            if (isset($dateMap[$dateStr])) {
+                                if ($dateMap[$dateStr] < 50) {
+                                    break; // Animal-based log resets streak!
+                                }
+                                $streak++;
+                                $currentDate->modify('-1 day');
                             } else {
-                                    break;
+                                break;
                             }
                         }
                     }

@@ -31,13 +31,17 @@ class StreakService {
       return {'streak': 0, 'dates': <String>[]};
     }
 
-    // Get unique dates
-    final Set<String> dateSet = {};
+    // Map each date to its minimum points
+    final Map<String, int> datePointsMap = {};
     for (var log in logs) {
-      dateSet.add(log.mealTime.toIso8601String().substring(0, 10));
+      final dateStr = log.mealTime.toIso8601String().substring(0, 10);
+      final currentPoints = datePointsMap[dateStr];
+      if (currentPoints == null || log.points < currentPoints) {
+        datePointsMap[dateStr] = log.points;
+      }
     }
 
-    final dates = dateSet.toList()..sort((a, b) => b.compareTo(a)); // descending
+    final dates = datePointsMap.keys.toList()..sort((a, b) => b.compareTo(a)); // descending
 
     if (dates.isEmpty) {
       return {'streak': 0, 'dates': <String>[]};
@@ -48,19 +52,23 @@ class StreakService {
     final yesterday = today.subtract(const Duration(days: 1));
     final yesterdayStr = yesterday.toIso8601String().substring(0, 10);
 
-    // Streak must start from today or yesterday
-    if (dates[0] != todayStr && dates[0] != yesterdayStr) {
+    final String startStr = (datePointsMap.containsKey(todayStr)) ? todayStr : yesterdayStr;
+    if (!datePointsMap.containsKey(startStr)) {
       return {'streak': 0, 'dates': dates};
     }
 
-    int streak = 1;
-    for (int i = 1; i < dates.length; i++) {
-      final current = DateTime.parse(dates[i - 1]);
-      final previous = DateTime.parse(dates[i]);
-      final diff = current.difference(previous).inDays;
+    int streak = 0;
+    String currentDateStr = startStr;
+    DateTime currentDate = DateTime.parse(currentDateStr);
 
-      if (diff == 1) {
+    while (true) {
+      if (datePointsMap.containsKey(currentDateStr)) {
+        if (datePointsMap[currentDateStr]! < 50) {
+          break; // Animal-based log resets streak!
+        }
         streak++;
+        currentDate = currentDate.subtract(const Duration(days: 1));
+        currentDateStr = currentDate.toIso8601String().substring(0, 10);
       } else {
         break;
       }

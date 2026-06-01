@@ -41,6 +41,14 @@
             <span class="menu-icon"><i class="bi bi-question-square-fill"></i></span>
             Kuis Nutrisi
         </a>
+        <a href="<?= $baseUrl ?>pages/myths/index.php" class="menu-item <?= strpos($currentUri, 'myths') !== false ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-lightbulb-fill"></i></span>
+            Myth vs Fact
+        </a>
+        <a href="<?= $baseUrl ?>pages/quests/index.php" class="menu-item <?= strpos($currentUri, 'quests') !== false ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-compass-fill"></i></span>
+            Misi Harian
+        </a>
 
         <div class="menu-label">Management</div>
         <a href="<?= $baseUrl ?>pages/food-logs/index.php" class="menu-item <?= strpos($currentUri, 'food-logs') !== false ? 'active' : '' ?>">

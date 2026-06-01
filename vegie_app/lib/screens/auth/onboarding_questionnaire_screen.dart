@@ -23,16 +23,33 @@ class _OnboardingQuestionnaireScreenState extends State<OnboardingQuestionnaireS
   String? _selectedAvatar;
   
   final List<String> _avatars = [
-    'daffodil.png',
+    'abstract-shape.png',
+    'camellia.png',
+    'clover.png',
+    'dahlia (1).png',
+    'daisy.png',
+    'fax.png',
     'flower (1).png',
-    'flower (2).png',
+    'flower (3).png',
+    'flower pink.png',
     'flower.png',
-    'iris.png',
+    'flowerbiru.png',
+    'flowerputih.png',
+    'frangipani.png',
+    'garland.png',
+    'hibicus.png',
+    'hibiscus.png',
+    'lily.png',
     'mexican-aster.png',
+    'nature.png',
     'pink-cosmos.png',
+    'poppy.png',
+    'rose (1).png',
+    'rose.png',
     'sakura.png',
     'sunflower (1).png',
     'sunflower.png',
+    'violet.png',
   ];
 
   bool? isPracticing;
