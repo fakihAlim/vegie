@@ -8,6 +8,8 @@ import '../../widgets/news_card.dart';
 import '../../services/quiz_service.dart';
 import '../../models/badge_model.dart';
 import '../../widgets/badge_celebration_dialog.dart';
+import '../home/home_screen.dart';
+
 
 class NewsScreen extends StatefulWidget {
   const NewsScreen({super.key});
@@ -129,7 +131,6 @@ class DailyQuizCard extends StatefulWidget {
 class _DailyQuizCardState extends State<DailyQuizCard> {
   final QuizService _quizService = QuizService();
   Future<Map<String, dynamic>?>? _quizFuture;
-  bool _isClosed = false;
   String? _selectedOption;
   bool _isSubmitting = false;
   Map<String, dynamic>? _result;
@@ -194,8 +195,6 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isClosed) return const SizedBox.shrink();
-
     return FutureBuilder<Map<String, dynamic>?>(
       future: _quizFuture,
       builder: (context, snapshot) {
@@ -349,7 +348,9 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          _isClosed = true;
+                          _result = null;
+                          _selectedOption = null;
+                          _quizFuture = _quizService.getDailyQuiz();
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -360,7 +361,32 @@ class _DailyQuizCardState extends State<DailyQuizCard> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('Tutup Kuis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      child: const Text('Kuis Lagi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HomeScreen(initialIndex: 2)),
+                          (route) => false,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                        side: BorderSide(
+                          color: isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text('Kembali ke Halaman Discover', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
                   ),
                 ],

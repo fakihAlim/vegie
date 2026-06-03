@@ -414,7 +414,21 @@ class AuthController {
         $stmt->execute([$userId]);
         $foodLogPoints = (int) ($stmt->fetch()['total_points'] ?? 0);
 
-        return $quizPoints + $foodLogPoints;
+        // Points from Quests (Daily Missions)
+        $stmt = $this->db->prepare(
+            "SELECT extra_data FROM user_activity_logs WHERE user_id = ? AND action = 'earn_points'"
+        );
+        $stmt->execute([$userId]);
+        $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $questPoints = 0;
+        foreach ($logs as $log) {
+            $data = json_decode($log['extra_data'], true);
+            if (isset($data['reason']) && $data['reason'] === 'quest_completed') {
+                $questPoints += (int) ($data['points_earned'] ?? 0);
+            }
+        }
+
+        return $quizPoints + $foodLogPoints + $questPoints;
     }
 
     /**

@@ -15,10 +15,16 @@ class GroupListScreen extends StatefulWidget {
   State<GroupListScreen> createState() => _GroupListScreenState();
 }
 
-class _GroupListScreenState extends State<GroupListScreen> {
+class _GroupListScreenState extends State<GroupListScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final groupProv = Provider.of<GroupProvider>(context, listen: false);
       groupProv.fetchGroups(); // Dibenarkan: Memanggil fetchGroups()
@@ -27,44 +33,51 @@ class _GroupListScreenState extends State<GroupListScreen> {
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppTheme.background,
-        appBar: AppBar(
-          title: const Text('Komunitas', style: TextStyle(fontWeight: FontWeight.bold)),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.group_add_outlined),
-              tooltip: 'Gabung Grup',
-              onPressed: () => _navigateToJoin(context),
-            ),
-          ],
-          bottom: const TabBar(
-            labelColor: AppTheme.primary,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: AppTheme.primary,
-            indicatorWeight: 3,
-            tabs: [
-              Tab(text: 'Grup Saya'),
-              Tab(text: 'Discover'),
-            ],
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Komunitas', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: 'Gabung Grup',
+            onPressed: () => _navigateToJoin(context),
           ),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: 'groupListFab',
-          onPressed: () => _navigateToCreate(context),
-          backgroundColor: AppTheme.primary,
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('Buat Grup', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-        ),
-        body: TabBarView(
-          children: [
-            _buildMyGroupsTab(),
-            _buildDiscoverTab(),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppTheme.primary,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppTheme.primary,
+          indicatorWeight: 3,
+          tabs: const [
+            Tab(text: 'Discover'),
+            Tab(text: 'Grup Saya'),
           ],
         ),
+      ),
+      floatingActionButton: _tabController.index == 0
+          ? FloatingActionButton.extended(
+              heroTag: 'groupListFab',
+              onPressed: () => _navigateToCreate(context),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Buat Grup', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            )
+          : null,
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildDiscoverTab(),
+          _buildMyGroupsTab(),
+        ],
       ),
     );
   }

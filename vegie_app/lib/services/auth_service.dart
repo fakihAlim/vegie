@@ -90,12 +90,17 @@ class AuthService {
     if (userData.containsKey('is_onboarding_completed')) {
       await prefs.setBool(Constants.keyOnboardingCompleted, userData['is_onboarding_completed'] == true || userData['is_onboarding_completed'] == 1);
     }
+    ApiService.clearTokenCache();
   }
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(Constants.keyToken);
     await prefs.remove(Constants.keyUser);
+    await prefs.remove(Constants.keyOnboardingCompleted);
+    await prefs.remove('saved_recipes');
+    await prefs.remove('tried_recipes');
+    ApiService.clearTokenCache();
   }
 
   Future<void> saveUser(User user) async {

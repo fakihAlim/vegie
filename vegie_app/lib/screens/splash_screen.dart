@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/recipe_provider.dart';
 import '../../config/constants.dart';
 import 'auth/login_screen.dart';
 import 'auth/onboarding_questionnaire_screen.dart';
@@ -34,6 +35,9 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     if (authProvider.isAuthenticated) {
+      // Reload user-specific saved/tried recipes in memory
+      Provider.of<RecipeProvider>(context, listen: false).loadSavedAndTriedRecipes();
+
       final prefs = await SharedPreferences.getInstance();
       final bool onboardingCompleted = prefs.getBool(Constants.keyOnboardingCompleted) ?? false;
       if (!mounted) return;

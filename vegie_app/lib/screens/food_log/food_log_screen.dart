@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
 import '../../providers/group_provider.dart';
+import '../../providers/quest_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
 import '../../models/user.dart';
@@ -397,14 +398,27 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                   tooltip: log.isShared ? 'Batal bagikan ke Discover' : 'Bagikan ke Discover',
                                   onPressed: () async {
                                     final provider = Provider.of<FoodLogProvider>(context, listen: false);
+                                    final groupProvider = Provider.of<GroupProvider>(context, listen: false);
+                                    final questProvider = Provider.of<QuestProvider>(context, listen: false);
+                                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                                    final messenger = ScaffoldMessenger.of(context);
+
                                     final success = await provider.toggleShareLog(log);
                                     if (!mounted) return;
                                     if (success) {
                                       // Refresh Discover Feed in background
-                                      Provider.of<GroupProvider>(context, listen: false).fetchDiscoverFeed();
-                                      if (!mounted) return;
+                                      groupProvider.fetchDiscoverFeed();
                                       
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      final updatedLog = provider.logs.firstWhere((l) => l.localId == log.localId, orElse: () => log);
+                                      if (updatedLog.isShared) {
+                                        // Pemicu progres misi
+                                        final questUpdated = await questProvider.updateQuestProgress('share_group');
+                                        if (questUpdated) {
+                                          authProvider.init();
+                                        }
+                                      }
+
+                                      messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(log.isShared 
                                               ? 'Batal membagikan jurnal makanan.' 
@@ -414,7 +428,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                         ),
                                       );
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      messenger.showSnackBar(
                                         const SnackBar(
                                           content: Text('Gagal mengubah status pembagian jurnal makanan.'),
                                           behavior: SnackBarBehavior.floating,

@@ -296,6 +296,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  String _getDifficulty(int? minutes) {
+    if (minutes == null) return 'Sedang';
+    if (minutes <= 20) return 'Mudah';
+    if (minutes <= 45) return 'Sedang';
+    return 'Sulit';
+  }
+
   Widget _buildRecipeSection() {
     return Consumer<RecipeProvider>(
       builder: (context, provider, child) {
@@ -308,7 +315,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         }
 
         return SizedBox(
-          height: 260,
+          height: 380,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -332,55 +339,145 @@ class _InsightsScreenState extends State<InsightsScreen> {
         );
       },
       child: Container(
-        width: 200,
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        width: 280,
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 3)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
           ],
+          border: Border.all(color: Colors.grey.shade100),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: CachedNetworkImage(
-                imageUrl: recipe.photo ?? '',
-                height: 140,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: Colors.grey[200]),
-                errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.restaurant)),
-              ),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: CachedNetworkImage(
+                    imageUrl: recipe.photo ?? '',
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: 160,
+                      color: AppTheme.accentLight,
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      height: 160,
+                      color: AppTheme.accentLight,
+                      child: Icon(Icons.restaurant, size: 48, color: AppTheme.primary.withValues(alpha: 0.3)),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getDifficulty(recipe.prepTimeMinutes),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Consumer<RecipeProvider>(
+                    builder: (context, recipeProv, _) {
+                      final isSaved = recipeProv.isRecipeSaved(recipe.id);
+                      return GestureDetector(
+                        onTap: () {
+                          recipeProv.toggleSaveRecipe(recipe.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isSaved ? 'Resep dihapus dari simpanan' : 'Resep berhasil disimpan! 💚'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          backgroundColor: Colors.white.withValues(alpha: 0.95),
+                          radius: 18,
+                          child: Icon(
+                            isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            color: isSaved ? AppTheme.primary : AppTheme.textPrimary,
+                            size: 18,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     recipe.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 2,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: AppTheme.textPrimary,
+                    ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
+                  Text(
+                    recipe.description ?? 'Resep vegetarian bergizi tinggi dan sehat.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade500,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.grey.shade100, height: 1),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.local_fire_department, size: 14, color: Colors.orange.shade700),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.calories} kcal',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                      Row(
+                        children: [
+                          Icon(Icons.local_fire_department_outlined, size: 16, color: Colors.orange.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${recipe.calories} kcal',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.timer, size: 14, color: Colors.blue.shade700),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${recipe.prepTimeMinutes ?? 0}m',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Icon(Icons.timer_outlined, size: 16, color: Colors.blue.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${recipe.prepTimeMinutes ?? 0} mnt',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                          ),
+                        ],
                       ),
                     ],
                   ),

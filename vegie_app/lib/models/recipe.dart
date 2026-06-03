@@ -8,6 +8,11 @@ class Recipe {
   final DateTime publishedAt;
   final List<RecipeIngredient>? ingredients;
   final List<RecipeStep>? steps;
+  final List<String>? tags;
+  final int? protein;
+  final int? carbs;
+  final int? fat;
+  final String? tips;
 
   Recipe({
     required this.id,
@@ -19,6 +24,11 @@ class Recipe {
     required this.publishedAt,
     this.ingredients,
     this.steps,
+    this.tags,
+    this.protein,
+    this.carbs,
+    this.fat,
+    this.tips,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
@@ -36,6 +46,13 @@ class Recipe {
       steps: json['steps'] != null
           ? (json['steps'] as List).map((s) => RecipeStep.fromJson(s)).toList()
           : null,
+      tags: json['tags'] != null
+          ? (json['tags'] as List).map((t) => t.toString()).toList()
+          : null,
+      protein: json['protein'],
+      carbs: json['carbs'],
+      fat: json['fat'],
+      tips: json['tips'],
     );
   }
 }

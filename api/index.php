@@ -297,7 +297,9 @@ try {
             $controller = new QuestController();
             $id = $segments[1] ?? null;
 
-            if ($id && isset($segments[2]) && $segments[2] === 'progress' && $method === 'POST') {
+            if ($id === 'progress' && $method === 'POST') {
+                $controller->updateProgress();
+            } elseif ($id && isset($segments[2]) && $segments[2] === 'progress' && $method === 'POST') {
                 $controller->updateProgress();
             } elseif (!$id && $method === 'GET') {
                 $controller->index();

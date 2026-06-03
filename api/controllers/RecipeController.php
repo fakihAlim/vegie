@@ -40,7 +40,7 @@ class RecipeController {
         $params[] = $perPage;
         $params[] = $offset;
         $stmt = $this->db->prepare(
-            "SELECT id, title, photo, description, calories, prep_time_minutes, published_at 
+            "SELECT id, title, photo, description, calories, prep_time_minutes, published_at, tags, protein, carbs, fat, tips
              FROM recipes $where ORDER BY published_at DESC LIMIT ? OFFSET ?"
         );
         $stmt->execute($params);
@@ -54,7 +54,12 @@ class RecipeController {
                 'description' => $item['description'],
                 'calories' => $item['calories'] ? (int) $item['calories'] : null,
                 'prep_time_minutes' => $item['prep_time_minutes'] ? (int) $item['prep_time_minutes'] : null,
-                'published_at' => $item['published_at']
+                'published_at' => $item['published_at'],
+                'tags' => isset($item['tags']) && $item['tags'] ? explode(',', $item['tags']) : [],
+                'protein' => isset($item['protein']) ? (int) $item['protein'] : null,
+                'carbs' => isset($item['carbs']) ? (int) $item['carbs'] : null,
+                'fat' => isset($item['fat']) ? (int) $item['fat'] : null,
+                'tips' => $item['tips'] ?? null
             ];
         }, $recipes);
 
@@ -98,7 +103,12 @@ class RecipeController {
             'prep_time_minutes' => $recipe['prep_time_minutes'] ? (int) $recipe['prep_time_minutes'] : null,
             'ingredients' => $ingredients,
             'steps' => $steps,
-            'published_at' => $recipe['published_at']
+            'published_at' => $recipe['published_at'],
+            'tags' => $recipe['tags'] ? explode(',', $recipe['tags']) : [],
+            'protein' => $recipe['protein'] ? (int) $recipe['protein'] : null,
+            'carbs' => $recipe['carbs'] ? (int) $recipe['carbs'] : null,
+            'fat' => $recipe['fat'] ? (int) $recipe['fat'] : null,
+            'tips' => $recipe['tips']
         ]);
     }
 
@@ -123,13 +133,19 @@ class RecipeController {
         $ingredients = $data['ingredients'] ?? []; // Expected format: [ [ingredient, amount], ... ]
         $steps = $data['steps'] ?? []; // Expected format: [ step_desc, ... ]
 
+        $tags = isset($data['tags']) ? (is_array($data['tags']) ? implode(',', $data['tags']) : trim($data['tags'])) : null;
+        $protein = isset($data['protein']) ? (int)$data['protein'] : null;
+        $carbs = isset($data['carbs']) ? (int)$data['carbs'] : null;
+        $fat = isset($data['fat']) ? (int)$data['fat'] : null;
+        $tips = isset($data['tips']) ? trim($data['tips']) : null;
+
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare(
-                "INSERT INTO recipes (title, description, photo, calories, prep_time_minutes, is_published, published_at) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO recipes (title, description, photo, calories, prep_time_minutes, is_published, published_at, tags, protein, carbs, fat, tips) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
-            $stmt->execute([$title, $description, $photo, $calories, $prepTime, $isPublished, $publishedAt]);
+            $stmt->execute([$title, $description, $photo, $calories, $prepTime, $isPublished, $publishedAt, $tags, $protein, $carbs, $fat, $tips]);
             $recipeId = (int) $this->db->lastInsertId();
 
             // Insert ingredients

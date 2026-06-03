@@ -117,6 +117,9 @@ $recipeList = $stmt->fetchAll();
                                             </td>
                                             <td>
                                                 <div class="actions">
+                                                    <a href="detail.php?id=<?= $recipe['id'] ?>" class="btn btn-sm btn-outline" title="Detail" style="border-color: var(--primary-light); color: var(--primary-light);">
+                                                        <i class="bi bi-info-circle"></i>
+                                                    </a>
                                                     <a href="edit.php?id=<?= $recipe['id'] ?>" class="btn btn-sm btn-secondary" title="Edit">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>

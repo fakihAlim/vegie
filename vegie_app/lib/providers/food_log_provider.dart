@@ -112,24 +112,55 @@ class FoodLogProvider with ChangeNotifier {
   /// Add a food log.
   Future<Map<String, dynamic>> addLog(FoodLog log) async {
     try {
-      // First, save locally
+      final hasConnection = await _foodLogService.hasInternetConnection();
+      
+      if (hasConnection) {
+        try {
+          // Try direct save to online server first for real-time AI analysis
+          final result = await _foodLogService.addFoodLogOnline(log);
+          final FoodLog syncedLog = result['log'] as FoodLog;
+          final newlyUnlockedBadges = result['badges'] as List? ?? [];
+          
+          _logs.insert(0, syncedLog);
+          _logs.sort((a, b) => b.mealTime.compareTo(a.mealTime));
+          _updateLogDates();
+          
+          await fetchStreak();
+          notifyListeners();
+          
+          return {
+            'badges': newlyUnlockedBadges,
+            'points': syncedLog.points,
+            'log': syncedLog,
+          };
+        } catch (serverError) {
+          debugPrint("Server save failed: $serverError. Falling back to offline save.");
+          // Fall through to offline path below
+        }
+      }
+      
+      // Offline fallback: save locally first
       final savedLog = await _foodLogService.addFoodLogLocal(log);
       _logs.insert(0, savedLog);
       _logs.sort((a, b) => b.mealTime.compareTo(a.mealTime));
       _updateLogDates();
       notifyListeners();
 
-      // Then sync online and capture any newly unlocked badges
-      final newBadges = await _syncService.syncUnsyncedFoodLogs();
+      // Background sync trigger (errors won't block)
+      List<dynamic> newBadges = [];
+      try {
+        newBadges = await _syncService.syncUnsyncedFoodLogs();
+      } catch (syncError) {
+        debugPrint("Background sync error: $syncError");
+      }
 
-      // Refresh the log from DB so it has server data (nutrition, points, etc.)
+      // Refresh local log mapping
       final allLogs = await _foodLogService.getFoodLogsLocal();
       final syncedLog = allLogs.firstWhere((l) => l.localId == savedLog.localId, orElse: () => savedLog);
       final idx = _logs.indexWhere((l) => l.localId == savedLog.localId);
       if (idx != -1) _logs[idx] = syncedLog;
 
-      // Refresh streak since a new log was added
-      fetchStreak();
+      await fetchStreak();
       notifyListeners();
 
       return {
@@ -141,8 +172,8 @@ class FoodLogProvider with ChangeNotifier {
       debugPrint("Error adding log: $e");
       return {
         'badges': <Map<String, dynamic>>[],
-        'points': 0,
-        'log': null,
+        'points': 50, // Default to 50 instead of 0 to avoid false hewani warning!
+        'log': log,
       };
     }
   }

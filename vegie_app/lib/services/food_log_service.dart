@@ -20,10 +20,69 @@ class FoodLogService {
     return await _localDb.getFoodLogs();
   }
 
+  Future<bool> hasInternetConnection() async {
+    return await _hasInternet();
+  }
+
+  Future<Map<String, dynamic>> addFoodLogOnline(FoodLog log) async {
+    final ApiService apiService = ApiService();
+    
+    // Upload directly to server first
+    final response = await apiService.multipartPost(
+      Constants.endpointFoodLogs,
+      {
+        'food_name': log.foodName,
+        'category': log.category,
+        'meal_time': log.mealTime.toIso8601String(),
+        if (log.nutritionNotes != null) 'nutrition_notes': log.nutritionNotes!,
+        'points': log.points.toString(),
+      },
+      'photo',
+      log.photoPath,
+    );
+
+    if (response['success'] == true) {
+      final data = response['data'];
+      final newlyUnlockedBadges = data['newly_unlocked_badges'] as List? ?? [];
+      
+      // Save the returned synced log directly to SQLite local database
+      final syncedLog = FoodLog(
+        id: data['id'],
+        photoPath: log.photoPath,
+        photoUrl: data['photo'],
+        foodName: data['food_name'] ?? log.foodName,
+        mealTime: log.mealTime,
+        category: log.category,
+        nutritionNotes: log.nutritionNotes,
+        calories: data['calories'] != null ? (data['calories'] as num).toDouble() : null,
+        carbs: data['carbs'] != null ? (data['carbs'] as num).toDouble() : null,
+        fat: data['fat'] != null ? (data['fat'] as num).toDouble() : null,
+        protein: data['protein'] != null ? (data['protein'] as num).toDouble() : null,
+        isShared: data['is_shared'] == true || data['is_shared'] == 1,
+        isSynced: true,
+        rawResponse: data['raw_response'] ?? data['ai_raw_response'],
+        points: data['points'] != null ? (data['points'] as num).toInt() : 0,
+      );
+
+      final savedLog = await _localDb.insertFoodLog(syncedLog);
+      return {
+        'badges': newlyUnlockedBadges,
+        'log': savedLog,
+      };
+    } else {
+      throw Exception(response['message'] ?? "Gagal menyimpan jurnal makanan ke server.");
+    }
+  }
+
   Future<FoodLog> addFoodLog(FoodLog log) async {
     final hasConnection = await _hasInternet();
     
-    // First, save locally
+    if (hasConnection) {
+      final result = await addFoodLogOnline(log);
+      return result['log'] as FoodLog;
+    }
+    
+    // Fallback: save locally only if offline
     final savedLog = await _localDb.insertFoodLog(
       FoodLog(
         photoPath: log.photoPath,
@@ -34,16 +93,6 @@ class FoodLogService {
         isSynced: false,
       )
     );
-
-    // If online, try to sync immediately
-    if (hasConnection) {
-      await _syncService.syncUnsyncedFoodLogs();
-      // Fetch the updated log from DB to get the AI analysis results
-      final allLogs = await _localDb.getFoodLogs();
-      final syncedLog = allLogs.firstWhere((l) => l.localId == savedLog.localId, orElse: () => savedLog);
-      return syncedLog;
-    }
-    
     return savedLog;
   }
 

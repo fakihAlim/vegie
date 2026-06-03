@@ -11,6 +11,7 @@ import '../../models/food_log.dart';
 import '../../models/badge_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/food_log_provider.dart';
+import '../../providers/quest_provider.dart';
 import '../../services/activity_log_service.dart';
 import '../../widgets/badge_celebration_dialog.dart';
 
@@ -403,7 +404,9 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
     );
 
     final result = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
-    final newBadges = result['badges'] as List<Map<String, dynamic>>? ?? [];
+    final newBadges = (result['badges'] as List?)
+        ?.map((b) => Map<String, dynamic>.from(b as Map))
+        .toList() ?? <Map<String, dynamic>>[];
     final points = result['points'] as int? ?? 0;
 
     setState(() => _isSaving = false);
@@ -412,6 +415,14 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
 
     // Pop the loading dialog
     Navigator.pop(context);
+
+    // Pemicu progres misi
+    final questUpdated = await Provider.of<QuestProvider>(context, listen: false)
+        .updateQuestProgress('log_food');
+    if (questUpdated && mounted) {
+      await Provider.of<AuthProvider>(context, listen: false).init();
+    }
+    if (!mounted) return;
 
     // Refresh AuthProvider profile to update Carbon footprint & points & badge codes
     await Provider.of<AuthProvider>(context, listen: false).init();

@@ -9,6 +9,8 @@ import '../../models/user.dart';
 import '../../models/badge_model.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
+import '../../providers/recipe_provider.dart';
+import '../recipes/recipe_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,6 +22,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   void _logout(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Reset RecipeProvider in-memory state so the new user doesn't see old saved recipes
+    Provider.of<RecipeProvider>(context, listen: false).clearRecipes();
+    
     await authProvider.logout();
     
     if (context.mounted) {
@@ -440,6 +446,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               
               // 4. Section Etalase Lencana (Lottie-powered)
               _buildBadgeSection(context),
+              
+              const SizedBox(height: 36),
+              
+              // 5. Section Resep Tersimpan
+              _buildSavedRecipesSection(context),
               
               const SizedBox(height: 40),
               
@@ -934,6 +945,174 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSavedRecipesSection(BuildContext context) {
+    return Consumer<RecipeProvider>(
+      builder: (context, recipeProv, _) {
+        final savedRecipes = recipeProv.recipesList.where((r) => recipeProv.savedRecipeIds.contains(r.id)).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.bookmark_rounded, color: AppTheme.primary, size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Resep Tersimpan',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                if (savedRecipes.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${savedRecipes.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (savedRecipes.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade100),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.bookmark_outline_rounded, size: 48, color: Colors.grey.shade300),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Belum ada resep yang disimpan.\nJelajahi resep sehat di halaman Insight!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
+                    ),
+                  ],
+                ),
+              )
+            else
+              SizedBox(
+                height: 180,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: savedRecipes.length,
+                  itemBuilder: (context, index) {
+                    final recipe = savedRecipes[index];
+                    return Container(
+                      width: 150,
+                      margin: const EdgeInsets.only(right: 12, bottom: 4, top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                        border: Border.all(color: Colors.grey.shade100),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => RecipeDetailScreen(recipe: recipe)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      child: recipe.photo != null
+                                          ? CachedNetworkImage(
+                                              imageUrl: recipe.photo!,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => Container(color: AppTheme.accentLight),
+                                              errorWidget: (context, url, error) => Container(
+                                                color: AppTheme.accentLight,
+                                                child: const Icon(Icons.restaurant, color: AppTheme.primary),
+                                              ),
+                                            )
+                                          : Container(
+                                              color: AppTheme.accentLight,
+                                              child: const Icon(Icons.restaurant, color: AppTheme.primary),
+                                            ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        recipeProv.toggleSaveRecipe(recipe.id);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Resep dihapus dari simpanan'),
+                                            duration: Duration(seconds: 1),
+                                          ),
+                                        );
+                                      },
+                                      child: CircleAvatar(
+                                        backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                        radius: 12,
+                                        child: const Icon(Icons.close, size: 14, color: AppTheme.error),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Text(
+                                recipe.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              )
+          ],
+        );
+      },
     );
   }
 }

@@ -20,6 +20,8 @@ if (!$recipe) {
     exit;
 }
 
+$recipeTags = !empty($recipe['tags']) ? explode(',', $recipe['tags']) : [];
+
 // Get existing ingredients & steps
 $stmt = $db->prepare("SELECT * FROM recipe_ingredients WHERE recipe_id = ? ORDER BY sort_order");
 $stmt->execute([$id]);
@@ -40,8 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newIngredients = $_POST['ingredients'] ?? [];
     $newIngredientAmounts = $_POST['ingredient_amounts'] ?? [];
     $newSteps = $_POST['steps'] ?? [];
+    
+    // New fields
+    $protein = !empty($_POST['protein']) ? (int) $_POST['protein'] : null;
+    $carbs = !empty($_POST['carbs']) ? (int) $_POST['carbs'] : null;
+    $fat = !empty($_POST['fat']) ? (int) $_POST['fat'] : null;
+    $tips = !empty($_POST['tips']) ? trim($_POST['tips']) : null;
+    $tags = !empty($_POST['tags']) && is_array($_POST['tags']) ? implode(',', $_POST['tags']) : null;
 
     if (empty($title)) $errors[] = 'Judul wajib diisi';
+    if ($calories !== null && $calories < 0) $errors[] = 'Kalori tidak boleh kurang dari 0';
+    if ($prepTime !== null && $prepTime < 0) $errors[] = 'Waktu masak tidak boleh kurang dari 0';
+    if ($protein !== null && $protein < 0) $errors[] = 'Protein tidak boleh kurang dari 0';
+    if ($carbs !== null && $carbs < 0) $errors[] = 'Karbohidrat tidak boleh kurang dari 0';
+    if ($fat !== null && $fat < 0) $errors[] = 'Lemak tidak boleh kurang dari 0';
 
     // Handle photo upload
     $photoPath = $recipe['photo'];
@@ -61,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $publishedAt = $isPublished ? ($recipe['published_at'] ?? date('Y-m-d H:i:s')) : null;
             $stmt = $db->prepare(
-                "UPDATE recipes SET title = ?, photo = ?, description = ?, calories = ?, prep_time_minutes = ?, is_published = ?, published_at = ? WHERE id = ?"
+                "UPDATE recipes SET title = ?, photo = ?, description = ?, calories = ?, prep_time_minutes = ?, is_published = ?, published_at = ?, tags = ?, protein = ?, carbs = ?, fat = ?, tips = ? WHERE id = ?"
             );
-            $stmt->execute([$title, $photoPath, $description, $calories, $prepTime, $isPublished, $publishedAt, $id]);
+            $stmt->execute([$title, $photoPath, $description, $calories, $prepTime, $isPublished, $publishedAt, $tags, $protein, $carbs, $fat, $tips, $id]);
 
             // Replace ingredients
             $db->prepare("DELETE FROM recipe_ingredients WHERE recipe_id = ?")->execute([$id]);
@@ -141,16 +155,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <textarea id="description" name="description" class="form-control" rows="3"><?= htmlspecialchars($recipe['description'] ?? '') ?></textarea>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <div class="form-group">
-                                <label for="calories">Kalori (kcal)</label>
-                                <input type="number" id="calories" name="calories" class="form-control"
-                                       value="<?= $recipe['calories'] ?? '' ?>" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="prep_time_minutes">Waktu Masak (menit)</label>
-                                <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control"
-                                       value="<?= $recipe['prep_time_minutes'] ?? '' ?>" min="0">
+                        <div class="form-group">
+                            <label for="prep_time_minutes">Waktu Masak (menit)</label>
+                            <input type="number" id="prep_time_minutes" name="prep_time_minutes" class="form-control"
+                                   value="<?= htmlspecialchars($recipe['prep_time_minutes'] ?? '') ?>"
+                                   placeholder="Contoh: 30" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Kategori Makanan / Tags (Pilih satu atau lebih)</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
+                                <?php
+                                $availableTags = ['High Protein', 'Vegan', 'Vegetarian', 'Low Calorie', 'Gluten Free', 'Dairy Free'];
+                                foreach ($availableTags as $tag):
+                                ?>
+                                    <div class="form-check form-check-inline" style="display: inline-flex; align-items: center;">
+                                        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: 14px; font-weight: 500; margin: 0;">
+                                            <input type="checkbox" name="tags[]" value="<?= htmlspecialchars($tag) ?>"
+                                                   <?= in_array($tag, $recipeTags) ? 'checked' : '' ?>
+                                                   style="width: 16px; height: 16px; accent-color: var(--primary);">
+                                            <?= htmlspecialchars($tag) ?>
+                                        </label>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
 
@@ -170,6 +197,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="file" id="photo" name="photo" accept="image/*"
                                    style="display:none" onchange="previewImage(this, 'photoPreview')">
                             <div id="photoPreview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nutritional Info -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>📊 Informasi Nutrisi</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="calories">Kalori (kcal)</label>
+                                <input type="number" id="calories" name="calories" class="form-control"
+                                       value="<?= htmlspecialchars($recipe['calories'] ?? '') ?>"
+                                       placeholder="Contoh: 350" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="protein">Protein (g)</label>
+                                <input type="number" id="protein" name="protein" class="form-control"
+                                       value="<?= htmlspecialchars($recipe['protein'] ?? '') ?>"
+                                       placeholder="Contoh: 15" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="carbs">Karbohidrat (g)</label>
+                                <input type="number" id="carbs" name="carbs" class="form-control"
+                                       value="<?= htmlspecialchars($recipe['carbs'] ?? '') ?>"
+                                       placeholder="Contoh: 45" min="0">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="fat">Lemak (g)</label>
+                                <input type="number" id="fat" name="fat" class="form-control"
+                                       value="<?= htmlspecialchars($recipe['fat'] ?? '') ?>"
+                                       placeholder="Contoh: 10" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cooking Tips -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>💡 Tips Memasak</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="tips">Tips / Saran Penyajian</label>
+                            <textarea id="tips" name="tips" class="form-control" rows="4"
+                                      placeholder="Masukkan tips atau saran terkait resep ini..."><?= htmlspecialchars($recipe['tips'] ?? '') ?></textarea>
+                            <small class="text-muted" style="margin-top: 6px; display: block;">Mendukung penjelasan panjang, langkah alternatif, atau tips penyajian khusus.</small>
                         </div>
                     </div>
                 </div>

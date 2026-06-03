@@ -46,6 +46,9 @@ class QuestController {
         $userId = $auth['user_id'];
         $today = date('Y-m-d');
 
+        // Ensure user has daily quests assigned today
+        $this->assignDailyQuests($userId, $today);
+
         $data = getJsonBody();
         validateRequired($data, ['quest_type']);
         $questType = $data['quest_type'];
