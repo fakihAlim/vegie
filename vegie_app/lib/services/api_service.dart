@@ -163,7 +163,13 @@ class ApiService {
       } catch (_) {
         errorBody = {'message': 'Unknown error occurred ($statusCode)'};
       }
-      throw Exception(errorBody['message'] ?? 'Unknown error occurred');
+      // Preserve error_code in message so upstream callers can detect specific errors
+      final errorCode = errorBody['error_code'] as String?;
+      final message = errorBody['message'] ?? 'Unknown error occurred';
+      if (errorCode != null && errorCode.isNotEmpty) {
+        throw Exception('$errorCode: $message');
+      }
+      throw Exception(message);
     }
   }
 }
