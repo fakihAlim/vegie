@@ -269,6 +269,18 @@ try {
             }
             break;
 
+        case 'ai-settings':
+            require_once __DIR__ . '/controllers/AiSettingsController.php';
+            $controller = new AiSettingsController();
+            $action = $segments[1] ?? null;
+
+            if ($action === 'reset-stats' && ($method === 'POST' || $method === 'GET')) {
+                $controller->resetDailyStats();
+            } else {
+                jsonError('AI settings endpoint not found', 404);
+            }
+            break;
+
         case 'badges':
             require_once __DIR__ . '/controllers/BadgeController.php';
             $controller = new BadgeController();

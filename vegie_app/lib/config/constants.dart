@@ -1,7 +1,7 @@
 class Constants {
   // API Configuration
-  static String baseUrl = 'http://192.168.1.11/Vegie/api';
-  static const String localUrl = 'http://192.168.1.11/Vegie/api';
+  static String baseUrl = 'http://192.168.1.12/Vegie/api';
+  static const String localUrl = 'http://192.168.1.12/Vegie/api';
   static const String onlineUrl = 'https://yodi.my.id/vegie/api';
   static const String endpointLogin = '/auth/login';
   static const String endpointRegister = '/auth/register';

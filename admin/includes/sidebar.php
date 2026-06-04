@@ -69,6 +69,14 @@
             <span class="menu-icon"><i class="bi bi-bell-fill"></i></span>
             Notifikasi
         </a>
+        <a href="<?= $baseUrl ?>pages/settings/index.php" class="menu-item <?= (strpos($currentUri, 'settings') !== false && strpos($currentUri, 'logs.php') === false) ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-gear-fill"></i></span>
+            Konfigurasi AI
+        </a>
+        <a href="<?= $baseUrl ?>pages/settings/logs.php" class="menu-item <?= strpos($currentUri, 'settings/logs.php') !== false ? 'active' : '' ?>">
+            <span class="menu-icon"><i class="bi bi-cpu"></i></span>
+            Log Aktivitas AI
+        </a>
         <a href="<?= $baseUrl ?>logout.php" class="menu-item">
             <span class="menu-icon"><i class="bi bi-box-arrow-left"></i></span>
             Logout

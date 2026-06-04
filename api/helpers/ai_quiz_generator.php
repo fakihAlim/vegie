@@ -117,12 +117,21 @@ function generateQuizWithOllama(string $prompt): ?array {
  * @return array|null
  */
 function generateQuizWithGemini(string $prompt): ?array {
-    if (empty(GEMINI_API_KEY)) {
+    $apiKey = defined('GEMINI_API_KEY') && !empty(GEMINI_API_KEY) ? GEMINI_API_KEY : '';
+    if (empty($apiKey)) {
+        // Fallback to active keys in database
+        require_once __DIR__ . '/../config/database.php';
+        $db = Database::getInstance()->getConnection();
+        $stmtKey = $db->query("SELECT api_key FROM ai_gemini_keys WHERE status = 'active' LIMIT 1");
+        $apiKey = $stmtKey->fetchColumn() ?: '';
+    }
+
+    if (empty($apiKey)) {
         error_log("AI Quiz Generator - Gemini API key not configured");
         return null;
     }
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . GEMINI_API_KEY;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . $apiKey;
 
     $payload = json_encode([
         'contents' => [

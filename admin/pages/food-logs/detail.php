@@ -18,6 +18,11 @@ if (!$id) {
 
 // Handle re-analyze request
 if (isset($_POST['reanalyze'])) {
+    $selectedModel = $_POST['selected_model'] ?? null;
+    if ($selectedModel === 'default') {
+        $selectedModel = null;
+    }
+    
     $stmt = $db->prepare("SELECT photo FROM food_logs WHERE id = ?");
     $stmt->execute([$id]);
     $log = $stmt->fetch();
@@ -26,7 +31,8 @@ if (isset($_POST['reanalyze'])) {
         $fullPhotoPath = __DIR__ . '/../../../api/' . $log['photo'];
         if (file_exists($fullPhotoPath)) {
             require_once __DIR__ . '/../../../api/helpers/nutrition_analyzer.php';
-            $aiResult = analyzeNutrition($fullPhotoPath);
+            $errorMessage = '';
+            $aiResult = analyzeNutrition($fullPhotoPath, $selectedModel, $errorMessage);
             
             if ($aiResult) {
                 $stmt = $db->prepare(
@@ -40,9 +46,9 @@ if (isset($_POST['reanalyze'])) {
                     $aiResult['raw_response'] ?? null,
                     $id
                 ]);
-                $_SESSION['flash_success'] = 'Analisis nutrisi berhasil diperbarui!';
+                $_SESSION['flash_success'] = 'Analisis nutrisi berhasil diperbarui menggunakan model: ' . ($aiResult['ai_provider'] ?? 'AI') . '!';
             } else {
-                $_SESSION['flash_error'] = 'Gagal menganalisis foto. Pastikan Ollama berjalan atau Gemini API key tersedia.';
+                $_SESSION['flash_error'] = 'Gagal menganalisis foto dengan model terpilih. Detail Error: ' . $errorMessage;
             }
         } else {
             $_SESSION['flash_error'] = 'File foto tidak ditemukan di server.';
@@ -339,11 +345,37 @@ $catColor = $catColors[$log['category']] ?? '#6b7280';
                                 </div>
                             <?php endforeach; ?>
                         <?php else: ?>
+                            <?php
+                            $currentProvider = $log['ai_provider'] ?? '';
+                            function isModelSelected($modelName, $currentProvider) {
+                                return (strpos($currentProvider, $modelName) !== false) ? 'selected' : '';
+                            }
+                            ?>
                             <div style="text-align: center; padding: 24px; color: #94a3b8;">
                                 <i class="bi bi-exclamation-circle" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
                                 <p>Data nutrisi belum tersedia</p>
-                                <form method="POST" style="margin-top: 12px;">
-                                    <button type="submit" name="reanalyze" value="1" class="btn btn-primary btn-sm">
+                                <form method="POST" style="margin-top: 16px; background: #fff; padding: 16px; border-radius: 12px; border: 1px dashed #bfdbfe; text-align: left;">
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 12px; font-weight: 600; color: #1e3a5f;">Pilih Model AI</label>
+                                        <select name="selected_model" class="form-select" style="width: 100%; padding: 8px; border-radius: 8px; font-size: 13px;">
+                                            <option value="default">Default Fallback (Ollama -> Gemini)</option>
+                                            <optgroup label="Google Gemini API">
+                                                <option value="gemini-3-flash-preview" <?= isModelSelected('gemini-3-flash-preview', $currentProvider) ?>>Gemini 3 Flash Live</option>
+                                                <option value="gemini-3.1-flash-tts-preview" <?= isModelSelected('gemini-3.1-flash-tts-preview', $currentProvider) ?>>Gemini 3.1 Flash TTS</option>
+                                                <option value="gemini-3.1-flash-lite" <?= isModelSelected('gemini-3.1-flash-lite', $currentProvider) ?>>Gemini 3.1 Flash Lite</option>
+                                                <option value="gemini-3.5-flash" <?= isModelSelected('gemini-3.5-flash', $currentProvider) ?>>Gemini 3.5 Flash</option>
+                                                <option value="gemma-4-31b-it" <?= isModelSelected('gemma-4-31b-it', $currentProvider) ?>>Gemma 4 31B</option>
+                                            </optgroup>
+                                            <optgroup label="Ollama (Local/Cloud)">
+                                                <option value="minimax-m2.5:cloud" <?= isModelSelected('minimax-m2.5:cloud', $currentProvider) ?>>minimax-m2.5:cloud</option>
+                                                <option value="jensonodigie/Jenteck-GPT:latest" <?= isModelSelected('jensonodigie/Jenteck-GPT:latest', $currentProvider) ?>>jensonodigie/Jenteck-GPT:latest</option>
+                                                <option value="cogito-2.1:671b-cloud" <?= isModelSelected('cogito-2.1:671b-cloud', $currentProvider) ?>>cogito-2.1:671b-cloud</option>
+                                                <option value="gemma4:31b-cloud" <?= isModelSelected('gemma4:31b-cloud', $currentProvider) ?>>gemma4:31b-cloud</option>
+                                                <option value="minimax-m2:cloud" <?= isModelSelected('minimax-m2:cloud', $currentProvider) ?>>minimax-m2:cloud</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <button type="submit" name="reanalyze" value="1" class="btn btn-primary btn-sm" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
                                         <i class="bi bi-robot"></i> Analisis dengan AI
                                     </button>
                                 </form>
@@ -361,11 +393,46 @@ $catColor = $catColors[$log['category']] ?? '#6b7280';
                     <?php endif; ?>
 
                     <?php if ($hasNutrition): ?>
-                        <form method="POST" style="margin-top: 12px;">
-                            <button type="submit" name="reanalyze" value="1" class="btn btn-sm btn-secondary">
-                                <i class="bi bi-arrow-repeat"></i> Re-Analyze dengan AI
-                            </button>
-                        </form>
+                        <?php
+                        if (!isset($currentProvider)) {
+                            $currentProvider = $log['ai_provider'] ?? '';
+                        }
+                        if (!function_exists('isModelSelected')) {
+                            function isModelSelected($modelName, $currentProvider) {
+                                return (strpos($currentProvider, $modelName) !== false) ? 'selected' : '';
+                            }
+                        }
+                        ?>
+                        <div class="card" style="margin-top: 16px;">
+                            <div class="card-body" style="padding: 16px;">
+                                <h5 style="margin-bottom: 12px; color: #1e3a5f;"><i class="bi bi-cpu" style="color: var(--primary);"></i> Uji & Re-Analisis Model</h5>
+                                <form method="POST">
+                                    <div class="form-group" style="margin-bottom: 12px;">
+                                        <label style="font-size: 12px; font-weight: 600; color: #64748b;">Pilih Model untuk Eksperimen</label>
+                                        <select name="selected_model" class="form-select" style="width: 100%; padding: 8px; border-radius: 8px; font-size: 13px;">
+                                            <option value="default">Default Fallback (Ollama -> Gemini)</option>
+                                            <optgroup label="Google Gemini API">
+                                                <option value="gemini-3-flash-preview" <?= isModelSelected('gemini-3-flash-preview', $currentProvider) ?>>Gemini 3 Flash Live</option>
+                                                <option value="gemini-3.1-flash-tts-preview" <?= isModelSelected('gemini-3.1-flash-tts-preview', $currentProvider) ?>>Gemini 3.1 Flash TTS</option>
+                                                <option value="gemini-3.1-flash-lite" <?= isModelSelected('gemini-3.1-flash-lite', $currentProvider) ?>>Gemini 3.1 Flash Lite</option>
+                                                <option value="gemini-3.5-flash" <?= isModelSelected('gemini-3.5-flash', $currentProvider) ?>>Gemini 3.5 Flash</option>
+                                                <option value="gemma-4-31b-it" <?= isModelSelected('gemma-4-31b-it', $currentProvider) ?>>Gemma 4 31B</option>
+                                            </optgroup>
+                                            <optgroup label="Ollama (Local/Cloud)">
+                                                <option value="minimax-m2.5:cloud" <?= isModelSelected('minimax-m2.5:cloud', $currentProvider) ?>>minimax-m2.5:cloud</option>
+                                                <option value="jensonodigie/Jenteck-GPT:latest" <?= isModelSelected('jensonodigie/Jenteck-GPT:latest', $currentProvider) ?>>jensonodigie/Jenteck-GPT:latest</option>
+                                                <option value="cogito-2.1:671b-cloud" <?= isModelSelected('cogito-2.1:671b-cloud', $currentProvider) ?>>cogito-2.1:671b-cloud</option>
+                                                <option value="gemma4:31b-cloud" <?= isModelSelected('gemma4:31b-cloud', $currentProvider) ?>>gemma4:31b-cloud</option>
+                                                <option value="minimax-m2:cloud" <?= isModelSelected('minimax-m2:cloud', $currentProvider) ?>>minimax-m2:cloud</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <button type="submit" name="reanalyze" value="1" class="btn btn-sm btn-secondary" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                                        <i class="bi bi-arrow-repeat"></i> Jalankan Re-Analisis
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     <?php endif; ?>
                 </div>
 

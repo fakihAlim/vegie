@@ -123,7 +123,8 @@ class FoodLogController {
         if ($photoPath) {
             $fullPhotoPath = __DIR__ . '/../' . $photoPath;
             require_once __DIR__ . '/../helpers/nutrition_analyzer.php';
-            $aiResult = analyzeNutrition($fullPhotoPath);
+            $errorVal = '';
+            $aiResult = analyzeNutrition($fullPhotoPath, null, $errorVal, $userId);
         }
 
         // Use AI-detected food name if no manual name provided or if placeholder is sent
@@ -350,7 +351,8 @@ class FoodLogController {
         }
 
         require_once __DIR__ . '/../helpers/nutrition_analyzer.php';
-        $aiResult = analyzeNutrition($fullPhotoPath);
+        $errorVal = '';
+        $aiResult = analyzeNutrition($fullPhotoPath, null, $errorVal, $userId);
 
         if (!$aiResult) {
             jsonError('AI analysis failed. Please try again later.', 500);
