@@ -100,6 +100,7 @@ class AuthService {
     await prefs.remove(Constants.keyOnboardingCompleted);
     await prefs.remove('saved_recipes');
     await prefs.remove('tried_recipes');
+    await prefs.remove('read_myths');
     ApiService.clearTokenCache();
   }
 
