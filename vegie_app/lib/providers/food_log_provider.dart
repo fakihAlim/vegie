@@ -174,6 +174,11 @@ class FoodLogProvider with ChangeNotifier {
         'log': syncedLog,
       };
     } catch (e) {
+      // not_food must propagate to UI — do NOT return a default success map
+      final errStr = e.toString();
+      if (errStr.contains('not_food') || errStr.contains('bukan makanan') || errStr.contains('Bukan Makanan')) {
+        rethrow;
+      }
       debugPrint("Error adding log: $e");
       return {
         'badges': <Map<String, dynamic>>[],
