@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:label="loving_harmony"
+        android:label="Loving Harmony"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
