@@ -69,6 +69,9 @@ class FoodLogService {
         'badges': newlyUnlockedBadges,
         'log': savedLog,
       };
+    } else if (response['error_code'] == 'not_food') {
+      // Image was not food — throw a typed exception to trigger the popup
+      throw Exception('not_food: ${response['message'] ?? 'Foto yang Anda upload bukan makanan. Silahkan ulangi mengambil foto.'}');
     } else {
       throw Exception(response['message'] ?? "Gagal menyimpan jurnal makanan ke server.");
     }

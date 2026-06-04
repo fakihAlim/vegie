@@ -403,7 +403,96 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
       photoPath: _imageFile!.path,
     );
 
-    final result = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
+    Map<String, dynamic> result;
+    try {
+      result = await Provider.of<FoodLogProvider>(context, listen: false).addLog(newLog);
+    } catch (e) {
+      setState(() => _isSaving = false);
+      if (!mounted) return;
+
+      // Pop the loading dialog
+      Navigator.pop(context);
+
+      final errStr = e.toString();
+      if (errStr.contains('not_food')) {
+        // Clear the invalid photo from state
+        setState(() => _imageFile = null);
+
+        // Show premium "not food" dialog
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.no_photography_rounded, color: Colors.orange.shade700, size: 28),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Foto Bukan Makanan',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            content: Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 8),
+              child: Text(
+                'Foto yang Anda upload bukan makanan.\nSilahkan ulangi mengambil foto.',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    // Automatically open camera picker
+                    _showImagePickerModal();
+                  },
+                  icon: const Icon(Icons.camera_alt_rounded, color: Colors.white),
+                  label: const Text('Ambil Foto Ulang', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Batal', style: TextStyle(color: Colors.grey.shade600)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Generic server error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Gagal menyimpan: ${errStr.replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+      return;
+    }
+
     final newBadges = (result['badges'] as List?)
         ?.map((b) => Map<String, dynamic>.from(b as Map))
         .toList() ?? <Map<String, dynamic>>[];

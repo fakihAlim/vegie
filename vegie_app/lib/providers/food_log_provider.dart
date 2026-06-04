@@ -134,6 +134,11 @@ class FoodLogProvider with ChangeNotifier {
             'log': syncedLog,
           };
         } catch (serverError) {
+          // not_food errors must not be swallowed — rethrow immediately
+          final errStr = serverError.toString();
+          if (errStr.contains('not_food') || errStr.contains('bukan makanan') || errStr.contains('Bukan Makanan')) {
+            rethrow;
+          }
           debugPrint("Server save failed: $serverError. Falling back to offline save.");
           // Fall through to offline path below
         }
