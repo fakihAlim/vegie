@@ -6,7 +6,16 @@
  * No external libraries needed - pure PHP implementation
  */
 
-define('JWT_SECRET', 'LovingHarmony_S3cr3t_K3y_2026_Ch4ng3_Th1s!');
+// Load configuration from env.php if it exists
+$jwtSecret = 'LovingHarmony_S3cr3t_K3y_2026_Ch4ng3_Th1s!'; // Default fallback
+$envFile = __DIR__ . '/../env.php';
+if (file_exists($envFile)) {
+    $env = require $envFile;
+    if (isset($env['JWT_SECRET'])) {
+        $jwtSecret = $env['JWT_SECRET'];
+    }
+}
+define('JWT_SECRET', $jwtSecret);
 define('JWT_EXPIRY', 86400 * 30); // 30 days
 
 /**

@@ -96,14 +96,14 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'LovingHarmony',
+                'Loving Harmony',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'The Vegetarian Lifestyle App',
+                'Plant-Based Diet Assistant',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white70,
                 ),
