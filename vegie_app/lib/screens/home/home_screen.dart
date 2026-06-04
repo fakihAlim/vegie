@@ -97,8 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildCameraTabItem(),
               _buildTabItem(
                 index: 2,
-                icon: isLocked ? Icons.lock_outline : Icons.explore_outlined,
-                activeIcon: isLocked ? Icons.lock : Icons.explore,
+                icon: isLocked ? Icons.lock_outline : Icons.travel_explore,
+                activeIcon: isLocked ? Icons.lock : Icons.travel_explore,
                 label: langProvider.translate('nav_discover'),
                 iconColor: isLocked ? Colors.redAccent : null,
               ),
@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const Icon(
             Icons.camera_alt_outlined,
-            color: AppTheme.textSecondary,
+            color: Colors.red,
             size: 24,
           ),
           const SizedBox(height: 4),
