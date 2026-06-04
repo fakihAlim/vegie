@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lottie/lottie.dart';
 import '../../providers/auth_provider.dart';
@@ -132,6 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
   Widget _buildBmiNutritionCard(User user) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     final hasMetrics = user.weight != null && user.height != null && user.age != null && user.gender != null;
     
     if (!hasMetrics) {
@@ -154,13 +156,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 36),
             const SizedBox(height: 12),
-            const Text(
-              'Informasi Fisik Belum Lengkap',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary),
+            Text(
+              langProvider.translate('physical_info_incomplete'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Silakan lengkapi data berat badan, tinggi badan, usia, dan gender Anda di pengaturan untuk menghitung BMI dan saran gizi harian.',
+              langProvider.translate('physical_info_desc'),
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500, height: 1.4),
             ),
@@ -171,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
-              child: const Text('Lengkapi Profil', style: TextStyle(fontSize: 14)),
+              child: Text(langProvider.translate('complete_profile'), style: const TextStyle(fontSize: 14)),
             ),
           ],
         ),
@@ -192,6 +194,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else if (bmi >= 25.0) {
       bmiCategory = 'over weight';
       bmiColor = Colors.redAccent;
+    }
+
+    String bmiCategoryTranslated = bmiCategory;
+    if (langProvider.currentLanguage == 'id') {
+      if (bmiCategory == 'ideal') bmiCategoryTranslated = 'ideal';
+      if (bmiCategory == 'under weight') bmiCategoryTranslated = 'kurang berat badan';
+      if (bmiCategory == 'over weight') bmiCategoryTranslated = 'kelebihan berat badan';
     }
 
     final targets = user.calculateDailyNutritionTargets();
@@ -222,9 +231,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 24),
               const SizedBox(width: 8),
-              const Text(
-                'Analisis Kesehatan & Nutrisi',
-                style: TextStyle(
+              Text(
+                langProvider.translate('health_nutrition_analysis'),
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -238,7 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  bmiCategory.toUpperCase(),
+                  bmiCategoryTranslated.toUpperCase(),
                   style: TextStyle(
                     color: bmiColor,
                     fontSize: 11,
@@ -257,24 +266,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 height: 1.6,
                 fontFamily: 'Inter',
               ),
-              children: [
-                const TextSpan(text: 'Salam sehat '),
-                TextSpan(text: user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const TextSpan(text: ' !. Anda sudah berada pada posisi berat badan '),
-                TextSpan(text: '${weight.round()} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
-                const TextSpan(text: ' dan tinggi badan '),
-                TextSpan(text: '${height.round()} cm', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
-                const TextSpan(text: ' dimana dengan berat ini anda termasuk '),
-                TextSpan(text: bmiCategory, style: TextStyle(fontWeight: FontWeight.bold, color: bmiColor)),
-                const TextSpan(text: ' berdasarkan perhitungan BMI. Untuk itu kami sarankan anda untuk mengikuti saran jumlah kalori dan nutrisi (karbohidrat, lemak dan protein) sejumlah '),
-                TextSpan(
-                  text: '$calories kkal (karbohidrat ${carbs}g, lemak ${fat}g dan protein ${protein}g)',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary),
-                ),
-                const TextSpan(text: ' sesuai dengan perhitungan dengan metode '),
-                const TextSpan(text: 'Mifflin-St Jeor', style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
-                const TextSpan(text: '.'),
-              ],
+              children: langProvider.currentLanguage == 'en'
+                ? [
+                    const TextSpan(text: 'Hello '),
+                    TextSpan(text: user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const TextSpan(text: '! You are currently at a weight of '),
+                    TextSpan(text: '${weight.round()} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    const TextSpan(text: ' and height of '),
+                    TextSpan(text: '${height.round()} cm', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    const TextSpan(text: ', which places you in the '),
+                    TextSpan(text: bmiCategoryTranslated, style: TextStyle(fontWeight: FontWeight.bold, color: bmiColor)),
+                    const TextSpan(text: ' category based on BMI calculation. Therefore, we recommend you to follow the daily calorie and nutrient target of '),
+                    TextSpan(
+                      text: '$calories kcal (carbohydrates ${carbs}g, fat ${fat}g, and protein ${protein}g)',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    ),
+                    const TextSpan(text: ' calculated using the '),
+                    const TextSpan(text: 'Mifflin-St Jeor', style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                    const TextSpan(text: ' method.'),
+                  ]
+                : [
+                    const TextSpan(text: 'Salam sehat '),
+                    TextSpan(text: user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const TextSpan(text: ' !. Anda sudah berada pada posisi berat badan '),
+                    TextSpan(text: '${weight.round()} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    const TextSpan(text: ' dan tinggi badan '),
+                    TextSpan(text: '${height.round()} cm', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    const TextSpan(text: ' dimana dengan berat ini anda termasuk '),
+                    TextSpan(text: bmiCategoryTranslated, style: TextStyle(fontWeight: FontWeight.bold, color: bmiColor)),
+                    const TextSpan(text: ' berdasarkan perhitungan BMI. Untuk itu kami sarankan anda untuk mengikuti saran jumlah kalori dan nutrisi (karbohidrat, lemak dan protein) sejumlah '),
+                    TextSpan(
+                      text: '$calories kkal (karbohidrat ${carbs}g, lemak ${fat}g dan protein ${protein}g)',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    ),
+                    const TextSpan(text: ' sesuai dengan perhitungan dengan metode '),
+                    const TextSpan(text: 'Mifflin-St Jeor', style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                    const TextSpan(text: '.'),
+                  ],
             ),
           ),
         ],
@@ -294,11 +322,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
+    final langProvider = Provider.of<LanguageProvider>(context);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Profil & Pencapaian', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(langProvider.translate('profile_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.textPrimary,
@@ -390,7 +419,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       child: Text(
-                        'Tahap: ${user.ttmStage.substring(0, 1).toUpperCase()}${user.ttmStage.substring(1)}',
+                        langProvider.currentLanguage == 'en'
+                            ? 'Stage: ${user.ttmStage.substring(0, 1).toUpperCase()}${user.ttmStage.substring(1)}'
+                            : 'Tahap: ${user.ttmStage.substring(0, 1).toUpperCase()}${user.ttmStage.substring(1)}',
                         style: const TextStyle(
                           color: Colors.white, 
                           fontWeight: FontWeight.bold, 
@@ -417,21 +448,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Expanded(
                         child: _buildGamificationStatCard(
-                          'Total Poin',
+                          langProvider.translate('total_points'),
                           '${user.totalPoints} PTS',
                           Icons.stars_rounded,
                           Colors.orange,
-                          'Poin terakumulasi',
+                          langProvider.translate('accumulated_points'),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildGamificationStatCard(
-                          'Hari Streak',
-                          '$streakCount Hari',
+                          langProvider.translate('streak_days'),
+                          langProvider.currentLanguage == 'en'
+                              ? '$streakCount ${streakCount == 1 ? 'Day' : 'Days'}'
+                              : '$streakCount Hari',
                           Icons.local_fire_department_rounded,
                           Colors.redAccent,
-                          'Pencatatan berturut',
+                          langProvider.translate('consecutive_logging'),
                         ),
                       ),
                     ],
@@ -472,9 +505,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: const Icon(Icons.wb_sunny_rounded, color: Colors.amber, size: 24),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Dampak Ekologis Anda',
-                          style: TextStyle(
+                        Text(
+                          langProvider.translate('ecological_impact'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -484,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Anda telah menghemat ${user.totalCarbonSaved.toStringAsFixed(2)} kg CO₂e!',
+                      '${langProvider.translate('saved_carbon_msg')} ${user.totalCarbonSaved.toStringAsFixed(2)} kg CO₂e!',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -494,7 +527,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Pola makan vegetarian Anda secara nyata mengurangi pemanasan global.',
+                      langProvider.translate('saved_carbon_desc'),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 12,
@@ -507,13 +540,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildEcologicalRow(
                       Icons.directions_car_rounded,
                       Colors.blue.shade100,
-                      'Setara menghemat ${(user.totalCarbonSaved * 0.43).toStringAsFixed(2)} Liter Bensin',
+                      '${langProvider.translate('gasoline_saved')} ${(user.totalCarbonSaved * 0.43).toStringAsFixed(2)} ${langProvider.translate('gasoline_unit')}',
                     ),
                     const SizedBox(height: 12),
                     _buildEcologicalRow(
                       Icons.forest_rounded,
                       Colors.green.shade100,
-                      'Setara kemampuan ${(user.totalCarbonSaved / 21.77).toStringAsFixed(4)} Pohon menyerap karbon dalam setahun',
+                      '${langProvider.translate('tree_saved')} ${(user.totalCarbonSaved / 21.77).toStringAsFixed(4)} ${langProvider.translate('tree_unit')}',
                     ),
                   ],
                 ),
@@ -534,7 +567,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               OutlinedButton.icon(
                 onPressed: () => _logout(context),
                 icon: const Icon(Icons.logout, color: AppTheme.error),
-                label: const Text('Keluar Akun', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(langProvider.translate('logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   foregroundColor: AppTheme.error,
@@ -555,6 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildBadgeSection(BuildContext context) {
     final badges = context.watch<AuthProvider>().userBadges;
+    final langProvider = Provider.of<LanguageProvider>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,9 +597,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Etalase Lencana',
-              style: TextStyle(
+            Text(
+              langProvider.translate('badge_showcase'),
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
@@ -573,8 +607,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             if (badges.isNotEmpty)
               Text(
-                '${badges.where((b) => b.isUnlocked).length}/${badges.length} terbuka',
-                style: TextStyle(
+                '${badges.where((b) => b.isUnlocked).length}/${badges.length} ${langProvider.translate('unlocked')}',
+                style: const TextStyle(
                   fontSize: 12,
                   color: AppTheme.primary,
                   fontWeight: FontWeight.w600,
@@ -597,10 +631,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Icon(Icons.military_tech_rounded, size: 52, color: Colors.grey.shade300),
                 const SizedBox(height: 14),
-                const Text(
-                  'Catat makanan & jawab kuis\nuntuk mendapatkan lencana pertamamu!',
+                Text(
+                  langProvider.translate('badge_showcase_empty'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontStyle: FontStyle.italic,
                     fontSize: 14,
@@ -628,6 +662,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildBadgeGridItem(BadgeModel badge) {
+    final langProvider = Provider.of<LanguageProvider>(context, listen: false);
     return GestureDetector(
       onTap: () {
         if (badge.isUnlocked) {
@@ -677,7 +712,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Tutup'),
+                      child: Text(langProvider.translate('close')),
                     ),
                   ),
                 ],
@@ -737,7 +772,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Lencana Terkunci 🔒',
+                    langProvider.translate('badge_locked'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -781,9 +816,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Kemajuan Anda',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                            Text(
+                              langProvider.translate('your_progress'),
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                             ),
                             Text(
                               '${badge.currentProgress} / ${badge.targetProgress} ${badge.progressUnit}',
@@ -818,9 +853,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Mengerti',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      child: Text(
+                        langProvider.currentLanguage == 'en' ? 'Got It' : 'Mengerti',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                   ),
@@ -1025,6 +1060,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildSavedRecipesSection(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Consumer<RecipeProvider>(
       builder: (context, recipeProv, _) {
         final savedRecipes = recipeProv.recipesList.where((r) => recipeProv.savedRecipeIds.contains(r.id)).toList();
@@ -1036,9 +1072,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const Icon(Icons.bookmark_rounded, color: AppTheme.primary, size: 22),
                 const SizedBox(width: 8),
-                const Text(
-                  'Resep Tersimpan',
-                  style: TextStyle(
+                Text(
+                  langProvider.currentLanguage == 'en' ? 'Saved Recipes' : 'Resep Tersimpan',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
@@ -1079,7 +1115,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icon(Icons.bookmark_outline_rounded, size: 48, color: Colors.grey.shade300),
                     const SizedBox(height: 12),
                     Text(
-                      'Belum ada resep yang disimpan.\nJelajahi resep sehat di halaman Insight!',
+                      langProvider.currentLanguage == 'en'
+                          ? 'No saved recipes yet.\nExplore healthy recipes on the Insight page!'
+                          : 'Belum ada resep yang disimpan.\nJelajahi resep sehat di halaman Insight!',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey.shade500, fontSize: 13, height: 1.5),
                     ),
@@ -1150,9 +1188,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       onTap: () {
                                         recipeProv.toggleSaveRecipe(recipe.id);
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Resep dihapus dari simpanan'),
-                                            duration: Duration(seconds: 1),
+                                          SnackBar(
+                                            content: Text(langProvider.currentLanguage == 'en'
+                                                ? 'Recipe removed from saved'
+                                                : 'Resep dihapus dari simpanan'),
+                                            duration: const Duration(seconds: 1),
                                           ),
                                         );
                                       },
@@ -1270,9 +1310,13 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   }
 
   Future<void> _save() async {
+    final langProvider = Provider.of<LanguageProvider>(context, listen: false);
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama tidak boleh kosong!'), backgroundColor: AppTheme.error),
+        SnackBar(
+          content: Text(langProvider.currentLanguage == 'en' ? 'Name cannot be empty!' : 'Nama tidak boleh kosong!'),
+          backgroundColor: AppTheme.error,
+        ),
       );
       return;
     }
@@ -1298,16 +1342,16 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil berhasil diperbarui! 💖'),
+        SnackBar(
+          content: Text(langProvider.currentLanguage == 'en' ? 'Profile updated successfully! 💖' : 'Profil berhasil diperbarui! 💖'),
           backgroundColor: AppTheme.primary,
         ),
       );
       Navigator.of(context).pop();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal memperbarui profil. Coba lagi.'),
+        SnackBar(
+          content: Text(langProvider.currentLanguage == 'en' ? 'Failed to update profile. Try again.' : 'Gagal memperbarui profil. Coba lagi.'),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -1316,6 +1360,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1347,21 +1392,23 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Edit Profil & Data Diri',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Text(
+              langProvider.currentLanguage == 'en' ? 'Edit Profile & Personal Data' : 'Edit Profil & Data Diri',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 4),
             Text(
-              'Sesuaikan avatar bunga terindahmu dan ubah info fisikmu kapan saja.',
+              langProvider.currentLanguage == 'en'
+                  ? 'Customize your beautiful flower avatar and edit your physical info anytime.'
+                  : 'Sesuaikan avatar bunga terindahmu dan ubah info fisikmu kapan saja.',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 24),
             
             // Avatar Row Selector
-            const Text(
-              'Pilih Karakter Avatar',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Text(
+              langProvider.currentLanguage == 'en' ? 'Choose Avatar Character' : 'Pilih Karakter Avatar',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -1403,14 +1450,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             const SizedBox(height: 24),
 
             // Form inputs
-            _buildInputField(controller: _nameController, label: 'Nama Lengkap', icon: Icons.person_outline_rounded),
+            _buildInputField(
+              controller: _nameController,
+              label: langProvider.currentLanguage == 'en' ? 'Full Name' : 'Nama Lengkap',
+              icon: Icons.person_outline_rounded,
+            ),
             const SizedBox(height: 16),
-            _buildInputField(controller: _bioController, label: 'Slogan / Bio', icon: Icons.chat_bubble_outline_rounded),
+            _buildInputField(
+              controller: _bioController,
+              label: langProvider.currentLanguage == 'en' ? 'Tagline / Bio' : 'Slogan / Bio',
+              icon: Icons.chat_bubble_outline_rounded,
+            ),
             const SizedBox(height: 16),
             
-            const Text(
-              'Jenis Kelamin',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+            Text(
+              langProvider.currentLanguage == 'en' ? 'Gender' : 'Jenis Kelamin',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
             ),
             const SizedBox(height: 8),
             Row(
@@ -1445,7 +1500,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Pria',
+                            langProvider.currentLanguage == 'en' ? 'Male' : 'Pria',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -1490,7 +1545,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Wanita',
+                            langProvider.currentLanguage == 'en' ? 'Female' : 'Wanita',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -1513,7 +1568,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Expanded(
                   child: _buildInputField(
                     controller: _ageController, 
-                    label: 'Usia (Thn)', 
+                    label: langProvider.currentLanguage == 'en' ? 'Age (Yrs)' : 'Usia (Thn)', 
                     icon: Icons.cake_rounded,
                     keyboardType: TextInputType.number,
                   ),
@@ -1522,7 +1577,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Expanded(
                   child: _buildInputField(
                     controller: _heightController, 
-                    label: 'Tinggi (cm)', 
+                    label: langProvider.currentLanguage == 'en' ? 'Height (cm)' : 'Tinggi (cm)', 
                     icon: Icons.height_rounded,
                     keyboardType: TextInputType.number,
                   ),
@@ -1531,7 +1586,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Expanded(
                   child: _buildInputField(
                     controller: _weightController, 
-                    label: 'Berat (kg)', 
+                    label: langProvider.currentLanguage == 'en' ? 'Weight (kg)' : 'Berat (kg)', 
                     icon: Icons.monitor_weight_rounded,
                     keyboardType: TextInputType.number,
                   ),
@@ -1555,7 +1610,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     width: 20, 
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                : Text(
+                    langProvider.currentLanguage == 'en' ? 'Save Changes' : 'Simpan Perubahan',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
             ),
           ],
         ),

@@ -8,6 +8,7 @@ import 'providers/recipe_provider.dart';
 import 'providers/group_provider.dart';
 import 'providers/myth_fact_provider.dart';
 import 'providers/quest_provider.dart';
+import 'providers/language_provider.dart';
 import 'services/activity_log_service.dart';
 import 'screens/splash_screen.dart';
 
@@ -53,6 +54,7 @@ class _LovingHarmonyAppState extends State<LovingHarmonyApp> with WidgetsBinding
         ChangeNotifierProvider(create: (_) => GroupProvider()),
         ChangeNotifierProvider(create: (_) => MythFactProvider()),
         ChangeNotifierProvider(create: (_) => QuestProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: MaterialApp(
         title: 'LovingHarmony',

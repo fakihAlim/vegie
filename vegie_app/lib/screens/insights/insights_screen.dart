@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../config/theme.dart';
@@ -44,10 +45,11 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Insights', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text(langProvider.translate('insights_title'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
         centerTitle: false,
         backgroundColor: AppTheme.background,
         elevation: 0,
@@ -70,15 +72,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              _buildSectionTitle('Myth vs Fact'),
+              _buildSectionTitle(langProvider.translate('myth_vs_fact')),
               _buildMythFactSection(),
               
               const SizedBox(height: 24),
-              _buildSectionTitle('Berita Terkini'),
+              _buildSectionTitle(langProvider.translate('latest_news')),
               _buildNewsSection(),
               
               const SizedBox(height: 24),
-              _buildSectionTitle('Resep Pilihan'),
+              _buildSectionTitle(langProvider.translate('featured_recipes')),
               _buildRecipeSection(),
               
               const SizedBox(height: 40), // Bottom padding
@@ -104,6 +106,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   Widget _buildEmptyMythFactCard() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -122,10 +125,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
             size: 40,
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Belum ada myth vs fact yang baru. Tunggu notifikasi atau cek aplikasi secara berkala',
+          Text(
+            langProvider.translate('no_new_myth'),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Color(0xFF2D6A4F),
@@ -138,6 +141,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   Widget _buildMythFactSection() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Consumer<MythFactProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.myths.isEmpty) {
@@ -148,9 +152,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         }
 
         if (provider.myths.isEmpty) {
-          return const SizedBox(
+          return SizedBox(
             height: 150,
-            child: Center(child: Text('Belum ada data Myth vs Fact')),
+            child: Center(child: Text(langProvider.translate('no_myth_data'))),
           );
         }
 
@@ -328,6 +332,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   Widget _buildNewsSection() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Consumer<NewsProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.newsList.isEmpty) {
@@ -335,7 +340,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         }
 
         if (provider.newsList.isEmpty) {
-          return const SizedBox(height: 200, child: Center(child: Text('Belum ada berita')));
+          return SizedBox(height: 200, child: Center(child: Text(langProvider.translate('no_news_data'))));
         }
 
         return SizedBox(
@@ -412,13 +417,15 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   String _getDifficulty(int? minutes) {
-    if (minutes == null) return 'Sedang';
-    if (minutes <= 20) return 'Mudah';
-    if (minutes <= 45) return 'Sedang';
-    return 'Sulit';
+    final langProvider = Provider.of<LanguageProvider>(context, listen: false);
+    if (minutes == null) return langProvider.translate('medium');
+    if (minutes <= 20) return langProvider.translate('easy');
+    if (minutes <= 45) return langProvider.translate('medium');
+    return langProvider.translate('hard');
   }
 
   Widget _buildRecipeSection() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Consumer<RecipeProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.recipesList.isEmpty) {
@@ -426,7 +433,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         }
 
         if (provider.recipesList.isEmpty) {
-          return const SizedBox(height: 200, child: Center(child: Text('Belum ada resep')));
+          return SizedBox(height: 200, child: Center(child: Text(langProvider.translate('no_recipes_data'))));
         }
 
         return SizedBox(
@@ -446,6 +453,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   }
 
   Widget _buildRecipeCard(Recipe recipe) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -522,7 +530,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           recipeProv.toggleSaveRecipe(recipe.id);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(isSaved ? 'Resep dihapus dari simpanan' : 'Resep berhasil disimpan! 💚'),
+                              content: Text(isSaved 
+                                ? (langProvider.currentLanguage == 'en' ? 'Recipe removed from bookmarks' : 'Resep dihapus dari simpanan')
+                                : (langProvider.currentLanguage == 'en' ? 'Recipe saved successfully! 💚' : 'Resep berhasil disimpan! 💚')),
                               duration: const Duration(seconds: 1),
                             ),
                           );
@@ -559,7 +569,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    recipe.description ?? 'Resep vegetarian bergizi tinggi dan sehat.',
+                    recipe.description ?? (langProvider.currentLanguage == 'en' ? 'Highly nutritious and healthy vegetarian recipe.' : 'Resep vegetarian bergizi tinggi dan sehat.'),
                     style: TextStyle(
                       fontSize: 12.5,
                       color: Colors.grey.shade500,
@@ -589,7 +599,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           Icon(Icons.timer_outlined, size: 16, color: Colors.blue.shade700),
                           const SizedBox(width: 4),
                           Text(
-                            '${recipe.prepTimeMinutes ?? 0} mnt',
+                            '${recipe.prepTimeMinutes ?? 0} ${langProvider.translate('minutes')}',
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
                           ),
                         ],

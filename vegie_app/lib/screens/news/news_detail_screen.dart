@@ -6,6 +6,9 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/news_provider.dart';
 import '../../config/theme.dart';
 import '../../models/news.dart';
+import '../../providers/auth_provider.dart';
+import '../../models/badge_model.dart';
+import '../../widgets/badge_celebration_dialog.dart';
 import '../../services/activity_log_service.dart';
 
 class NewsDetailScreen extends StatefulWidget {
@@ -25,10 +28,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   void initState() {
     super.initState();
     _news = widget.news; // Set data awal secara instan
-    ActivityLogService.instance.logEvent('news_view', extraData: {
-      'news_id': _news.id,
-      'title': _news.title,
-    });
+    _logNewsView();
     _loadExtraDetail();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final newsProv = Provider.of<NewsProvider>(context, listen: false);
@@ -36,6 +36,33 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         newsProv.fetchNews(refresh: true);
       }
     });
+  }
+
+  Future<void> _logNewsView() async {
+    try {
+      final newBadges = await ActivityLogService.instance.logEvent('news_view', extraData: {
+        'news_id': _news.id,
+        'title': _news.title,
+      });
+
+      if (newBadges != null && newBadges.isNotEmpty && mounted) {
+        // Refresh AuthProvider profile and badges to update points and unlocks
+        final authProv = Provider.of<AuthProvider>(context, listen: false);
+        await authProv.init();
+        if (!mounted) return;
+        await authProv.refreshBadges();
+        if (!mounted) return;
+
+        // Show badge celebration dialogs one by one
+        for (final badgeMap in newBadges) {
+          if (!mounted) break;
+          final badge = BadgeModel.fromJson(badgeMap);
+          await BadgeCelebrationDialog.show(context, badge);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error logging news view / showing badge: $e');
+    }
   }
 
   Future<void> _loadExtraDetail() async {

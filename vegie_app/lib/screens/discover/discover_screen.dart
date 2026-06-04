@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
 
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
@@ -43,11 +44,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     // Feature Locking Logic for Community (Groups)
     final user = Provider.of<AuthProvider>(context).user;
     final bool isLocked = user?.isFeatureLocked ?? false;
+    final langProvider = Provider.of<LanguageProvider>(context);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Discover', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text(langProvider.translate('nav_discover'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
         centerTitle: false,
         backgroundColor: AppTheme.background,
         elevation: 0,
@@ -62,15 +64,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('Misi Harian'),
+              _buildSectionTitle(langProvider.translate('daily_quests')),
               _buildQuestsSection(),
               
               const SizedBox(height: 24),
-              _buildSectionTitle('Kuis Hari Ini'),
+              _buildSectionTitle(langProvider.translate('todays_quiz')),
               _buildQuizSection(),
               
               const SizedBox(height: 24),
-              _buildSectionTitle('Komunitas & Grup'),
+              _buildSectionTitle(langProvider.translate('community_groups')),
               if (isLocked)
                 _buildLockedCommunity()
               else
@@ -99,6 +101,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildQuestsSection() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Consumer<QuestProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.quests.isEmpty) {
@@ -106,9 +109,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         }
 
         if (provider.quests.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Belum ada misi hari ini.'),
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(langProvider.translate('no_quests_today')),
           );
         }
 
@@ -190,6 +193,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildQuizSection() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     if (_isLoadingQuiz) {
       return const Padding(
         padding: EdgeInsets.all(32.0),
@@ -206,8 +210,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.shade200),
         ),
-        child: const Center(
-          child: Text('Kamu sudah menjawab semua kuis hari ini! 🎉', textAlign: TextAlign.center),
+        child: Center(
+          child: Text(langProvider.translate('answered_all_quizzes'), textAlign: TextAlign.center),
         ),
       );
     }
@@ -257,16 +261,16 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('KUIS BARU', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: Text(langProvider.translate('new_quiz'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
                       const Spacer(),
                       Text('+${_dailyQuiz!['points']} pts', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Uji Pengetahuanmu!',
-                    style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  Text(
+                    langProvider.translate('test_knowledge'),
+                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -292,7 +296,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       foregroundColor: AppTheme.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Mulai Kuis'),
+                    child: Text(langProvider.translate('start_quiz')),
                   ),
                 ],
               ),
@@ -304,6 +308,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildCommunityPreview() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -328,13 +333,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   child: const Icon(Icons.people, color: Colors.blue),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Berjejaring Bersama', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      SizedBox(height: 4),
-                      Text('Temukan dukungan dan inspirasi dari komunitas Vegan.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(langProvider.translate('network_together'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                      Text(langProvider.translate('network_desc'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ),
@@ -353,7 +358,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 side: const BorderSide(color: AppTheme.primary),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Buka Halaman Komunitas', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              child: Text(langProvider.translate('open_community'), style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -362,6 +367,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   Widget _buildLockedCommunity() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(24),
@@ -374,15 +380,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         children: [
           const Icon(Icons.lock_outline, size: 48, color: Colors.redAccent),
           const SizedBox(height: 16),
-          const Text(
-            'Komunitas Terkunci Sementara',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.redAccent),
+          Text(
+            langProvider.translate('community_locked'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.redAccent),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Catat 1 porsi buah atau sayur di Food Log untuk mencairkan streak dan membuka kembali fitur ini!',
+          Text(
+            langProvider.translate('community_locked_desc'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey),
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
         ],
       ),
