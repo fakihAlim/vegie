@@ -48,6 +48,9 @@ class MythFactProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    // Reload read myths list to ensure user-specific state is accurate
+    await loadReadMyths();
+
     try {
       _myths = await _service.getMyths();
     } catch (e) {

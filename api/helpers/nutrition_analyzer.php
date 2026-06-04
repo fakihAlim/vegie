@@ -426,6 +426,10 @@ function analyzeWithOllama($base64, $model = null, &$error = '') {
     //     . 'Do not include markdown, explanations, or extra text. Output ONLY the raw JSON object.';
 
     $prompt = 'You are an expert food recognition and nutrition analysis API. '
+    . 'FIRST, determine if the image contains any food or beverage items (including raw ingredients, packaged food, drinks, snacks, cooked meals, etc.). '
+    . 'If the image does NOT contain any food or beverage, immediately return ONLY this JSON: '
+    . '{"is_food":false,"nama_makanan":"Bukan Makanan","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
+    . 'If the image DOES contain food or beverage, set "is_food":true and continue with analysis. '
     . 'Analyze the food image and identify all visible food items. '
     . 'Estimate the portion size of each detected food item based on its visual appearance. '
     . 'If the image contains a composite or mixed meal (e.g., Gado-Gado, Nasi Rames, Nasi Campur, Salad, Burger, Sandwich, Bento, etc.), '
@@ -434,6 +438,7 @@ function analyzeWithOllama($base64, $model = null, &$error = '') {
     . 'Use realistic nutritional estimates based on standard food composition databases. '
     . 'If there is only one food item in the image, the "items" array must still contain that single item. '
     . 'Return ONLY a valid raw JSON object with exactly these keys: '
+    . '"is_food" (boolean, true if image contains food/beverage, false if not), '
     . '"nama_makanan" (string, name of the overall dish or meal), '
     . '"kalori" (float, total kcal), '
     . '"karbohidrat" (float, total carbohydrates in grams), '
@@ -450,7 +455,7 @@ function analyzeWithOllama($base64, $model = null, &$error = '') {
     . 'Do not use null values; use 0 if a value cannot be estimated. '
     . 'The total values for kalori, karbohidrat, lemak, and protein MUST equal the sum of all values in the items array. '
     . 'If the food cannot be identified with reasonable confidence, return: '
-    . '{"nama_makanan":"Tidak Diketahui","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
+    . '{"is_food":true,"nama_makanan":"Tidak Diketahui","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
     . 'Do not include markdown, explanations, comments, code fences, or extra text. '
     . 'Output ONLY the raw JSON object.';
 
@@ -522,6 +527,10 @@ function analyzeWithGemini($base64, $model = 'gemini-3.1-flash-lite', &$error = 
     $url = "https://generativelanguage.googleapis.com/v1beta/models/" . $model . ":generateContent?key=" . $activeKey;
     
     $prompt = 'You are an expert food recognition and nutrition analysis API. '
+    . 'FIRST, determine if the image contains any food or beverage items (including raw ingredients, packaged food, drinks, snacks, cooked meals, etc.). '
+    . 'If the image does NOT contain any food or beverage, immediately return ONLY this JSON: '
+    . '{"is_food":false,"nama_makanan":"Bukan Makanan","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
+    . 'If the image DOES contain food or beverage, set "is_food":true and continue with analysis. '
     . 'Analyze the food image and identify all visible food items. '
     . 'Estimate the portion size of each detected food item based on its visual appearance. '
     . 'If the image contains a composite or mixed meal (e.g., Gado-Gado, Nasi Rames, Nasi Campur, Salad, Burger, Sandwich, Bento, etc.), '
@@ -530,6 +539,7 @@ function analyzeWithGemini($base64, $model = 'gemini-3.1-flash-lite', &$error = 
     . 'Use realistic nutritional estimates based on standard food composition databases. '
     . 'If there is only one food item in the image, the "items" array must still contain that single item. '
     . 'Return ONLY a valid raw JSON object with exactly these keys: '
+    . '"is_food" (boolean, true if image contains food/beverage, false if not), '
     . '"nama_makanan" (string, name of the overall dish or meal), '
     . '"kalori" (float, total kcal), '
     . '"karbohidrat" (float, total carbohydrates in grams), '
@@ -546,7 +556,7 @@ function analyzeWithGemini($base64, $model = 'gemini-3.1-flash-lite', &$error = 
     . 'Do not use null values; use 0 if a value cannot be estimated. '
     . 'The total values for kalori, karbohidrat, lemak, and protein MUST equal the sum of all values in the items array. '
     . 'If the food cannot be identified with reasonable confidence, return: '
-    . '{"nama_makanan":"Tidak Diketahui","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
+    . '{"is_food":true,"nama_makanan":"Tidak Diketahui","kalori":0,"karbohidrat":0,"lemak":0,"protein":0,"items":[]} '
     . 'Do not include markdown, explanations, comments, code fences, or extra text. '
     . 'Output ONLY the raw JSON object.';
 
@@ -635,6 +645,22 @@ function parseNutritionResponse($rawText) {
         return null;
     }
 
+    // Check if the image is food. Default to true if key is not present (backward compat).
+    $isFood = isset($nutrition['is_food']) ? (bool)$nutrition['is_food'] : true;
+
+    // If AI determined this is not food, return early with the flag
+    if (!$isFood) {
+        return [
+            'is_food'   => false,
+            'food_name' => 'Bukan Makanan',
+            'calories'  => 0,
+            'carbs'     => 0,
+            'fat'       => 0,
+            'protein'   => 0,
+            'items'     => []
+        ];
+    }
+
     $carbsVal = floatval($nutrition['karbohidrat']);
     $fatVal = floatval($nutrition['lemak']);
     $proteinVal = floatval($nutrition['protein']);
@@ -663,6 +689,7 @@ function parseNutritionResponse($rawText) {
     }
 
     return [
+        'is_food'   => true,
         'food_name' => $nutrition['nama_makanan'] ?? 'Tidak Dikenali',
         'calories'  => $caloriesVal,
         'carbs'     => $carbsVal,

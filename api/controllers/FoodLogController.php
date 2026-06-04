@@ -125,6 +125,19 @@ class FoodLogController {
             require_once __DIR__ . '/../helpers/nutrition_analyzer.php';
             $errorVal = '';
             $aiResult = analyzeNutrition($fullPhotoPath, null, $errorVal, $userId);
+
+            // If AI determined the photo is NOT a food image, delete the upload and reject
+            if ($aiResult !== null && isset($aiResult['is_food']) && $aiResult['is_food'] === false) {
+                require_once __DIR__ . '/../helpers/upload.php';
+                deleteUploadedFile($photoPath);
+                http_response_code(422);
+                echo json_encode([
+                    'success'    => false,
+                    'error_code' => 'not_food',
+                    'message'    => 'Foto yang Anda upload bukan makanan. Silahkan ulangi mengambil foto.',
+                ]);
+                exit;
+            }
         }
 
         // Use AI-detected food name if no manual name provided or if placeholder is sent

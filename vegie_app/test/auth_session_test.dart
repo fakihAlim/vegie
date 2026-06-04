@@ -15,6 +15,7 @@ void main() {
         Constants.keyOnboardingCompleted: true,
         'saved_recipes': ['1', '2'],
         'tried_recipes': ['3'],
+        'read_myths': ['10', '11'],
       });
     });
 
@@ -28,6 +29,7 @@ void main() {
       expect(prefs.getBool(Constants.keyOnboardingCompleted), true);
       expect(prefs.getStringList('saved_recipes'), ['1', '2']);
       expect(prefs.getStringList('tried_recipes'), ['3']);
+      expect(prefs.getStringList('read_myths'), ['10', '11']);
 
       // Perform logout
       await authService.logout();
@@ -38,6 +40,7 @@ void main() {
       expect(prefs.containsKey(Constants.keyOnboardingCompleted), false);
       expect(prefs.containsKey('saved_recipes'), false);
       expect(prefs.containsKey('tried_recipes'), false);
+      expect(prefs.containsKey('read_myths'), false);
     });
 
     test('RecipeProvider loads from SharedPreferences and clears correctly', () async {
