@@ -13,6 +13,17 @@ if (file_exists($serviceAccountPath)) {
     $serviceAccount = null;
 }
 
+// Load SSL verification settings from environment configuration (default to true for production)
+$sslVerify = true;
+$envFile = __DIR__ . '/../env.php';
+if (file_exists($envFile)) {
+    $env = require $envFile;
+    if (isset($env['SSL_VERIFY'])) {
+        $sslVerify = (bool)$env['SSL_VERIFY'];
+    }
+}
+define('FCM_SSL_VERIFY', $sslVerify);
+
 /**
  * Generates an OAuth2 Access Token for FCM V1
  * Fixed: normalize private_key newlines for XAMPP Windows compatibility
@@ -59,7 +70,7 @@ function getFCMV1AccessToken() {
     curl_setopt($ch, CURLOPT_URL, $serviceAccount['token_uri']);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Required for XAMPP on Windows
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FCM_SSL_VERIFY);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
         'assertion'  => $jwt,
@@ -122,6 +133,7 @@ function sendFCMNotification($tokens, $title, $body, $data = []) {
         ]);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FCM_SSL_VERIFY);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
