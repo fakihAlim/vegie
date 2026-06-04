@@ -2,3 +2,7 @@ api/config/service-account.json
 api/env.php
 vegie_app/android/app/google-services.json
 scratch/
+
+# Generic patterns to prevent accidental credentials commits
+**/service-account.json
+**/env.php
