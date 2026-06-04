@@ -13,6 +13,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isReminderEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0); // Default to 8:00 PM
+  bool _allowEggs = false;
+  bool _allowMilk = false;
+  bool _allowHoney = false;
+  bool _restrictAlliums = false;
 
   @override
   void initState() {
@@ -30,6 +34,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (hour != null && minute != null) {
         _reminderTime = TimeOfDay(hour: hour, minute: minute);
       }
+      _allowEggs = prefs.getBool('diet_allow_eggs') ?? false;
+      _allowMilk = prefs.getBool('diet_allow_milk') ?? false;
+      _allowHoney = prefs.getBool('diet_allow_honey') ?? false;
+      _restrictAlliums = prefs.getBool('diet_restrict_alliums') ?? false;
     });
   }
 
@@ -45,6 +53,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else {
       await LocalNotificationService.cancelReminder();
     }
+  }
+
+  /// Sets diet preference setting dynamically and saves to SharedPreferences
+  Future<void> _setDietSetting(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+    setState(() {
+      if (key == 'diet_allow_eggs') _allowEggs = value;
+      if (key == 'diet_allow_milk') _allowMilk = value;
+      if (key == 'diet_allow_honey') _allowHoney = value;
+      if (key == 'diet_restrict_alliums') _restrictAlliums = value;
+    });
   }
 
   /// Shows the Time Picker dialog to select reminder time
@@ -234,6 +254,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   onTap: _pickTime,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Diet Exceptions Card
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Pengecualian Diet',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryDark),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sesuaikan penilaian food log berdasarkan aturan khusus diet plant-based Anda.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Colors.grey.shade100, height: 1, thickness: 1),
+                
+                // Allow Eggs
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: const Text(
+                    'Bolehkan Telur',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'Telur dan olahannya tidak dideteksi sebagai hewani.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowEggs,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_eggs', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Allow Milk
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: const Text(
+                    'Bolehkan Susu & Produk Susu',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'Susu, keju, mentega tidak dideteksi sebagai hewani.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowMilk,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_milk', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Allow Honey
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: const Text(
+                    'Bolehkan Madu',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'Madu tidak dideteksi sebagai hewani.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowHoney,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_honey', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Restrict Alliums
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: const Text(
+                    'Batasi Bawang & Turunannya',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'Deteksi bawang, bawang putih, daun bawang sebagai non-nabati.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _restrictAlliums,
+                  onChanged: (bool val) => _setDietSetting('diet_restrict_alliums', val),
                 ),
               ],
             ),

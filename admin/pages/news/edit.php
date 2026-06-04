@@ -58,6 +58,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<style>
+    /* Premium custom styling for EasyMDE in admin dashboard */
+    .EasyMDEContainer {
+        margin-top: 8px;
+        background: #fff;
+        border-radius: 8px;
+    }
+    .editor-toolbar {
+        border-top-left-radius: 8px !important;
+        border-top-right-radius: 8px !important;
+        border-color: #e2e8f0 !important;
+        background-color: #f8fafc;
+    }
+    .CodeMirror {
+        border-bottom-left-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
+        border-color: #e2e8f0 !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-size: 15px;
+    }
+</style>
+
 <div class="app-layout">
     <?php require_once __DIR__ . '/../../includes/sidebar.php'; ?>
 
@@ -88,8 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-group">
                             <label for="content">Konten *</label>
-                            <textarea id="content" name="content" class="form-control" rows="10"
-                                      required><?= htmlspecialchars($_POST['content'] ?? $news['content']) ?></textarea>
+                            <textarea id="content" name="content" class="form-control" rows="10"><?= htmlspecialchars($_POST['content'] ?? $news['content']) ?></textarea>
                         </div>
 
                         <div class="form-group">
@@ -130,5 +152,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('content'),
+            spellChecker: false,
+            autosave: {
+                enabled: true,
+                uniqueId: "news_edit_editor_" + <?= $id ?>,
+                delay: 2000,
+            },
+            placeholder: "Tulis konten berita di sini menggunakan format Markdown...",
+            status: ["lines", "words", "cursor"],
+            tabSize: 4,
+            renderingConfig: {
+                singleLineBreaks: false
+            }
+        });
+    });
+</script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

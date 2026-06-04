@@ -336,7 +336,7 @@ class _AddFoodLogScreenState extends State<AddFoodLogScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Keren!',
+                      'Yaahhh!',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

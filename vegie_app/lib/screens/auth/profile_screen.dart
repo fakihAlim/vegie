@@ -129,41 +129,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildProfileDetailCard(String label, String value, IconData icon) {
+
+
+  Widget _buildBmiNutritionCard(User user) {
+    final hasMetrics = user.weight != null && user.height != null && user.age != null && user.gender != null;
+    
+    if (!hasMetrics) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+          border: Border.all(color: const Color(0xFFE8F5E9)),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 36),
+            const SizedBox(height: 12),
+            const Text(
+              'Informasi Fisik Belum Lengkap',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Silakan lengkapi data berat badan, tinggi badan, usia, dan gender Anda di pengaturan untuk menghitung BMI dan saran gizi harian.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _showEditProfileSheet(context, user),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: const Text('Lengkapi Profil', style: TextStyle(fontSize: 14)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Calculations
+    final weight = user.weight!;
+    final height = user.height!;
+    final heightInM = height / 100.0;
+    final bmi = weight / (heightInM * heightInM);
+    
+    String bmiCategory = 'ideal';
+    Color bmiColor = AppTheme.primary;
+    if (bmi < 18.5) {
+      bmiCategory = 'under weight';
+      bmiColor = Colors.orange;
+    } else if (bmi >= 25.0) {
+      bmiCategory = 'over weight';
+      bmiColor = Colors.redAccent;
+    }
+
+    final targets = user.calculateDailyNutritionTargets();
+    final calories = targets['calories']!.round();
+    final carbs = targets['carbs']!.round();
+    final fat = targets['fat']!.round();
+    final protein = targets['protein']!.round();
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.015),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            color: AppTheme.primary.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           )
         ],
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: const Color(0xFFE8F5E9)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppTheme.primary),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+              const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                'Analisis Kesehatan & Nutrisi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: bmiColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  bmiCategory.toUpperCase(),
+                  style: TextStyle(
+                    color: bmiColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
-          )
+          ),
+          const SizedBox(height: 16),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                fontSize: 14.5,
+                color: AppTheme.textPrimary,
+                height: 1.6,
+                fontFamily: 'Inter',
+              ),
+              children: [
+                const TextSpan(text: 'Salam sehat '),
+                TextSpan(text: user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const TextSpan(text: ' !. Anda sudah berada pada posisi berat badan '),
+                TextSpan(text: '${weight.round()} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                const TextSpan(text: ' dan tinggi badan '),
+                TextSpan(text: '${height.round()} cm', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                const TextSpan(text: ' dimana dengan berat ini anda termasuk '),
+                TextSpan(text: bmiCategory, style: TextStyle(fontWeight: FontWeight.bold, color: bmiColor)),
+                const TextSpan(text: ' berdasarkan perhitungan BMI. Untuk itu kami sarankan anda untuk mengikuti saran jumlah kalori dan nutrisi (karbohidrat, lemak dan protein) sejumlah '),
+                TextSpan(
+                  text: '$calories kkal (karbohidrat ${carbs}g, lemak ${fat}g dan protein ${protein}g)',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary),
+                ),
+                const TextSpan(text: ' sesuai dengan perhitungan dengan metode '),
+                const TextSpan(text: 'Mifflin-St Jeor', style: TextStyle(fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -291,38 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
               
-              // 2. Profile Details Grid (Usia, TB, BB, Gender)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildProfileDetailCard('Usia', user.age != null ? '${user.age} thn' : '-', Icons.cake_rounded),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildProfileDetailCard(
-                      'Gender',
-                      user.gender != null
-                          ? (user.gender!.toLowerCase() == 'male' ? 'Pria' : 'Wanita')
-                          : '-',
-                      user.gender != null
-                          ? (user.gender!.toLowerCase() == 'male' ? Icons.male_rounded : Icons.female_rounded)
-                          : Icons.wc_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildProfileDetailCard('Tinggi', user.height != null ? '${user.height!.round()} cm' : '-', Icons.height_rounded),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildProfileDetailCard('Berat', user.weight != null ? '${user.weight!.round()} kg' : '-', Icons.monitor_weight_rounded),
-                  ),
-                ],
-              ),
+              _buildBmiNutritionCard(user),
               const SizedBox(height: 24),
               
               // 3. Gamification Stats Row
@@ -391,7 +473,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          'Dampak Ekologis Anda 🌿',
+                          'Dampak Ekologis Anda',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -432,12 +514,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Icons.forest_rounded,
                       Colors.green.shade100,
                       'Setara kemampuan ${(user.totalCarbonSaved / 21.77).toStringAsFixed(4)} Pohon menyerap karbon dalam setahun',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildEcologicalRow(
-                      Icons.battery_charging_full_rounded,
-                      Colors.amber.shade100,
-                      'Setara mengisi daya ${(user.totalCarbonSaved * 121.6).toStringAsFixed(1)} Smartphone',
                     ),
                   ],
                 ),

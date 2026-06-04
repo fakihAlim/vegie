@@ -1,12 +1,12 @@
 <?php
 /**
- * AI Quiz Generator Helper
+ * AI Myth Generator Helper
  * Vegie App API
  * 
- * Generates plant-based nutrition quiz questions using Google Gemini API.
+ * Generates plant-based nutrition myths and facts using Google Gemini API.
  */
 
-// Load env config if exists (same pattern as nutrition_analyzer.php)
+// Load env config if exists
 $envPath = __DIR__ . '/../env.php';
 if (file_exists($envPath)) {
     $env = require $envPath;
@@ -21,37 +21,37 @@ if (!defined('GEMINI_API_KEY')) {
 }
 
 /**
- * The quiz generation prompt (reusable across providers)
- */
-function getQuizPrompt(): string {
-    return 'Kamu adalah ahli gizi dan edukator diet plant-based. '
-        . 'Buatkan 1 pertanyaan kuis pilihan ganda tentang manfaat gizi, fakta menarik, atau mitos seputar diet plant-based dan makanan nabati. '
-        . 'Pertanyaan harus dalam Bahasa Indonesia dan edukatif. '
-        . 'Kembalikan HANYA dalam format JSON mentah (tanpa markdown, tanpa penjelasan tambahan) dengan key berikut: '
-        . '"question" (string), "option_a" (string), "option_b" (string), "option_c" (string), "option_d" (string), '
-        . '"correct_answer" (salah satu dari: "a", "b", "c", "d"), "explanation" (string penjelasan singkat mengapa jawaban tersebut benar).';
-}
-
-/**
- * Generate a plant-based quiz question using AI.
+ * Generate a plant-based myth or fact using AI.
  * Powered by Google Gemini API.
  * 
- * @return array|null - Quiz data array or null on failure
+ * @param string $adminPrompt - Optional custom prompt from admin
+ * @return array|null - Myth data array or null on failure
  */
-function generatePlantBasedQuiz(): ?array {
-    $prompt = getQuizPrompt();
+function generatePlantBasedMyth(string $adminPrompt = ''): ?array {
+    if (empty($adminPrompt)) {
+        $prompt = 'Kamu adalah ahli gizi dan edukator diet plant-based (nabati). '
+            . 'Buatkan 1 data mitos (myth) atau fakta (fact) baru seputar diet vegetarian, vegan, atau makanan nabati yang edukatif dan menarik. '
+            . 'Kembalikan HANYA dalam format JSON mentah (tanpa markdown, tanpa penjelasan tambahan) dengan struktur berikut: '
+            . '{"title": "Judul mitos atau fakta berupa pernyataan singkat yang sering terdengar", "type": "myth" atau "fact", "description": "Penjelasan ilmiah yang detail dan informatif mengapa hal tersebut merupakan mitos atau fakta"}';
+    } else {
+        $prompt = 'Kamu adalah ahli gizi dan edukator diet plant-based (nabati). '
+            . 'Berdasarkan permintaan/topik berikut: "' . $adminPrompt . '". '
+            . 'Buatkan 1 data mitos (myth) atau fakta (fact) seputar diet vegetarian, vegan, atau makanan nabati yang edukatif dan menarik. '
+            . 'Kembalikan HANYA dalam format JSON mentah (tanpa markdown, tanpa penjelasan tambahan) dengan struktur berikut: '
+            . '{"title": "Judul mitos atau fakta berupa pernyataan singkat yang sering terdengar", "type": "myth" atau "fact", "description": "Penjelasan ilmiah yang detail dan informatif mengapa hal tersebut merupakan mitos atau fakta"}';
+    }
 
     // Generate using Gemini API (cloud AI)
-    return generateQuizWithGemini($prompt);
+    return generateMythWithGemini($prompt);
 }
 
 /**
- * Generate quiz using Gemini API (cloud) — Fallback
+ * Generate myth using Gemini API (cloud) — Fallback
  * 
  * @param string $prompt
  * @return array|null
  */
-function generateQuizWithGemini(string $prompt): ?array {
+function generateMythWithGemini(string $prompt): ?array {
     $startTime = microtime(true);
     $apiKey = defined('GEMINI_API_KEY') && !empty(GEMINI_API_KEY) ? GEMINI_API_KEY : '';
     
@@ -59,7 +59,7 @@ function generateQuizWithGemini(string $prompt): ?array {
     require_once __DIR__ . '/ai_key_manager.php';
     
     $db = Database::getInstance()->getConnection();
-
+    
     if (empty($apiKey)) {
         // Fallback to active keys in database
         $stmtKey = $db->query("SELECT api_key FROM ai_gemini_keys WHERE status = 'active' LIMIT 1");
@@ -71,8 +71,8 @@ function generateQuizWithGemini(string $prompt): ?array {
 
     if (empty($apiKey)) {
         $reason = "Gemini API key not configured";
-        error_log("AI Quiz Generator - " . $reason);
-
+        error_log("AI Myth Generator - " . $reason);
+        
         // Log failed attempt
         try {
             $stmtLog = $db->prepare("
@@ -81,9 +81,9 @@ function generateQuizWithGemini(string $prompt): ?array {
             ");
             $stmtLog->execute([$reason]);
         } catch (Exception $e) {
-            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+            error_log("AI Myth Generator - Log failed: " . $e->getMessage());
         }
-
+        
         return null;
     }
 
@@ -119,7 +119,7 @@ function generateQuizWithGemini(string $prompt): ?array {
 
     if ($curlError || $httpCode !== 200) {
         $reason = "Gemini error: HTTP $httpCode, cURL: $curlError, Response: " . substr($response, 0, 300);
-        error_log("AI Quiz Generator - " . $reason);
+        error_log("AI Myth Generator - " . $reason);
 
         // Log failed attempt
         try {
@@ -129,7 +129,7 @@ function generateQuizWithGemini(string $prompt): ?array {
             ");
             $stmtLog->execute([$maskedKey, $responseTime, $reason]);
         } catch (Exception $e) {
-            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+            error_log("AI Myth Generator - Log failed: " . $e->getMessage());
         }
 
         return null;
@@ -139,7 +139,7 @@ function generateQuizWithGemini(string $prompt): ?array {
     $rawText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
     $tokensUsed = $data['usageMetadata']['totalTokenCount'] ?? 0;
 
-    $parsed = parseQuizResponse($rawText);
+    $parsed = parseMythResponse($rawText);
     if ($parsed !== null) {
         $parsed['ai_provider'] = 'Gemini';
 
@@ -151,7 +151,7 @@ function generateQuizWithGemini(string $prompt): ?array {
             ");
             $stmtLog->execute([$maskedKey, $tokensUsed, $responseTime]);
         } catch (Exception $e) {
-            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+            error_log("AI Myth Generator - Log failed: " . $e->getMessage());
         }
     } else {
         $reason = "JSON parse failed. Raw: " . substr($rawText, 0, 300);
@@ -164,19 +164,19 @@ function generateQuizWithGemini(string $prompt): ?array {
             ");
             $stmtLog->execute([$maskedKey, $responseTime, $reason]);
         } catch (Exception $e) {
-            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+            error_log("AI Myth Generator - Log failed: " . $e->getMessage());
         }
     }
     return $parsed;
 }
 
 /**
- * Parse AI response text to extract quiz JSON data.
+ * Parse AI response text to extract myth JSON data.
  * 
  * @param string $rawText - Raw AI response
- * @return array|null - ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'explanation']
+ * @return array|null - ['title', 'type', 'description']
  */
-function parseQuizResponse(string $rawText): ?array {
+function parseMythResponse(string $rawText): ?array {
     if (empty($rawText)) {
         return null;
     }
@@ -191,36 +191,31 @@ function parseQuizResponse(string $rawText): ?array {
         $jsonStr = trim($rawText);
     }
 
-    $quiz = json_decode($jsonStr, true);
+    $myth = json_decode($jsonStr, true);
 
     // Validate required keys
-    $requiredKeys = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'];
-    if (!is_array($quiz)) {
-        error_log("AI Quiz Generator - JSON parse failed. Raw: " . substr($rawText, 0, 500));
+    $requiredKeys = ['title', 'type', 'description'];
+    if (!is_array($myth)) {
+        error_log("AI Myth Generator - JSON parse failed. Raw: " . substr($rawText, 0, 500));
         return null;
     }
 
     foreach ($requiredKeys as $key) {
-        if (!isset($quiz[$key]) || trim($quiz[$key]) === '') {
-            error_log("AI Quiz Generator - Missing key '$key'. Raw: " . substr($rawText, 0, 500));
+        if (!isset($myth[$key]) || trim($myth[$key]) === '') {
+            error_log("AI Myth Generator - Missing key '$key'. Raw: " . substr($rawText, 0, 500));
             return null;
         }
     }
 
-    // Normalize correct_answer to lowercase single letter
-    $correctAnswer = strtolower(trim($quiz['correct_answer']));
-    if (!in_array($correctAnswer, ['a', 'b', 'c', 'd'])) {
-        error_log("AI Quiz Generator - Invalid correct_answer: '$correctAnswer'");
-        return null;
+    // Normalize type to lowercase
+    $type = strtolower(trim($myth['type']));
+    if ($type !== 'myth' && $type !== 'fact') {
+        $type = 'myth'; // Default fallback
     }
 
     return [
-        'question'       => trim($quiz['question']),
-        'option_a'       => trim($quiz['option_a']),
-        'option_b'       => trim($quiz['option_b']),
-        'option_c'       => trim($quiz['option_c']),
-        'option_d'       => trim($quiz['option_d']),
-        'correct_answer' => $correctAnswer,
-        'explanation'    => trim($quiz['explanation'] ?? ''),
+        'title'       => trim($myth['title']),
+        'type'        => $type,
+        'description' => trim($myth['description']),
     ];
 }
