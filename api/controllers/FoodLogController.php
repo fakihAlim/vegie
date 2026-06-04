@@ -123,7 +123,8 @@ class FoodLogController {
         if ($photoPath) {
             $fullPhotoPath = __DIR__ . '/../' . $photoPath;
             require_once __DIR__ . '/../helpers/nutrition_analyzer.php';
-            $aiResult = analyzeNutrition($fullPhotoPath);
+            $errorVal = '';
+            $aiResult = analyzeNutrition($fullPhotoPath, null, $errorVal, $userId);
         }
 
         // Use AI-detected food name if no manual name provided or if placeholder is sent
@@ -350,7 +351,8 @@ class FoodLogController {
         }
 
         require_once __DIR__ . '/../helpers/nutrition_analyzer.php';
-        $aiResult = analyzeNutrition($fullPhotoPath);
+        $errorVal = '';
+        $aiResult = analyzeNutrition($fullPhotoPath, null, $errorVal, $userId);
 
         if (!$aiResult) {
             jsonError('AI analysis failed. Please try again later.', 500);
@@ -600,11 +602,41 @@ class FoodLogController {
 
         // 1. CEK LOKAL (IN-MEMORY) TERLEBIH DAHULU
         // Ini akan sangat memangkas proses dan query ke DB.
+        $allowEggs = isset($_SERVER['HTTP_X_DIET_ALLOW_EGGS']) && $_SERVER['HTTP_X_DIET_ALLOW_EGGS'] === 'true';
+        $allowMilk = isset($_SERVER['HTTP_X_DIET_ALLOW_MILK']) && $_SERVER['HTTP_X_DIET_ALLOW_MILK'] === 'true';
+        $allowHoney = isset($_SERVER['HTTP_X_DIET_ALLOW_HONEY']) && $_SERVER['HTTP_X_DIET_ALLOW_HONEY'] === 'true';
+        $restrictAlliums = isset($_SERVER['HTTP_X_DIET_RESTRICT_ALLIUMS']) && $_SERVER['HTTP_X_DIET_RESTRICT_ALLIUMS'] === 'true';
+
         $hewaniKeywords = [
-            'ayam', 'daging', 'sapi', 'ikan', 'telur', 'susu', 'babi', 'kambing', 'udang', 
-            'cumi', 'kepiting', 'keju', 'mentega', 'egg', 'chicken', 'beef', 'fish', 'pork', 
-            'milk', 'cheese', 'butter'
+            'ayam', 'daging', 'sapi', 'ikan', 'babi', 'kambing', 'udang', 
+            'cumi', 'kepiting', 'chicken', 'beef', 'fish', 'pork'
         ];
+
+        if (!$allowEggs) {
+            $hewaniKeywords[] = 'telur';
+            $hewaniKeywords[] = 'egg';
+        }
+        if (!$allowMilk) {
+            $hewaniKeywords[] = 'susu';
+            $hewaniKeywords[] = 'keju';
+            $hewaniKeywords[] = 'mentega';
+            $hewaniKeywords[] = 'milk';
+            $hewaniKeywords[] = 'cheese';
+            $hewaniKeywords[] = 'butter';
+        }
+        if (!$allowHoney) {
+            $hewaniKeywords[] = 'madu';
+            $hewaniKeywords[] = 'honey';
+        }
+        
+        // Buddhist / restriction on alliums (bawang)
+        if ($restrictAlliums) {
+            $hewaniKeywords[] = 'bawang';
+            $hewaniKeywords[] = 'onion';
+            $hewaniKeywords[] = 'garlic';
+            $hewaniKeywords[] = 'shallot';
+            $hewaniKeywords[] = 'leek';
+        }
         
         foreach ($namesToCheck as $name) {
             foreach ($hewaniKeywords as $kw) {
@@ -627,11 +659,15 @@ class FoodLogController {
         }
 
         $whereClause = implode(' OR ', $conditions);
+        $whereCategory = "LOWER(category) = 'protein hewani'";
+        if ($allowEggs) {
+            $whereCategory .= " AND LOWER(food_name) != 'telur'";
+        }
 
         // Hanya cari data dengan kategori 'protein hewani' agar proses sorting dilakukan di tingkat SQL
         $sql = "
             SELECT 1 FROM emission_factors 
-            WHERE LOWER(category) = 'protein hewani' 
+            WHERE $whereCategory 
               AND ($whereClause)
             LIMIT 1
         ";

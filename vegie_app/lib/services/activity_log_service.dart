@@ -50,18 +50,17 @@ class ActivityLogService {
     }
   }
 
-  /// Fire-and-forget logging of an activity event
-  void logEvent(String action, {String? screen, int? duration, Map<String, dynamic>? extraData}) {
-    // Run asynchronously without waiting
-    unawaited(_sendLog(action, screen: screen, duration: duration, extraData: extraData));
+  /// Logs an activity event and returns newly unlocked badges (if any)
+  Future<List<dynamic>?> logEvent(String action, {String? screen, int? duration, Map<String, dynamic>? extraData}) async {
+    return await _sendLog(action, screen: screen, duration: duration, extraData: extraData);
   }
 
   /// Helper to send log to the backend server
-  Future<void> _sendLog(String action, {String? screen, int? duration, Map<String, dynamic>? extraData}) async {
+  Future<List<dynamic>?> _sendLog(String action, {String? screen, int? duration, Map<String, dynamic>? extraData}) async {
     try {
       // Check network connection first
       final hasConnection = await _hasInternet();
-      if (!hasConnection) return;
+      if (!hasConnection) return null;
 
       // Make sure device info is loaded
       if (!_deviceInfoLoaded) {
@@ -80,13 +79,22 @@ class ActivityLogService {
         'app_version': _appVersion,
       };
 
-      await _apiService.post(
+      final response = await _apiService.post(
         Constants.endpointActivityLogs,
         payload,
       );
+
+      if (response != null && response['success'] == true) {
+        final data = response['data'];
+        if (data != null && data['newly_unlocked_badges'] != null) {
+          return data['newly_unlocked_badges'] as List<dynamic>;
+        }
+      }
+      return null;
     } catch (e) {
       debugPrint('Error sending activity log: $e');
       // Fire-and-forget: ignore all errors so the user is not impacted
+      return null;
     }
   }
 

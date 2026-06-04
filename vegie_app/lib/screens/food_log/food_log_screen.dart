@@ -11,8 +11,9 @@ import '../../providers/quest_provider.dart';
 import '../../config/theme.dart';
 import '../../models/food_log.dart';
 import '../../models/user.dart';
-import '../../services/activity_log_service.dart';
 import '../../widgets/month_calendar.dart';
+import '../auth/settings_screen.dart';
+import '../../providers/language_provider.dart';
 import 'edit_food_log_screen.dart';
 
 class FoodLogScreen extends StatefulWidget {
@@ -34,29 +35,26 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
+    final langProvider = Provider.of<LanguageProvider>(context);
     
     return Scaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hello, ${user?.name.split(' ')[0] ?? 'User'} 👋', style: const TextStyle(fontSize: 16, color: AppTheme.primaryLight)),
-            const Text('Your Food Logs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+            Text('${langProvider.translate('hello')}, ${user?.name.split(' ')[0] ?? 'User'} 👋', style: const TextStyle(fontSize: 16, color: AppTheme.primaryLight)),
+            Text(langProvider.translate('your_food_logs'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
           ],
         ),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.sync),
-            onPressed: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Syncing data...')),
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
-              await Provider.of<FoodLogProvider>(context, listen: false).forceSync();
-              if (context.mounted) {
-                Provider.of<AuthProvider>(context, listen: false).init();
-              }
-              ActivityLogService.instance.logEvent('sync_manual');
             },
           ),
         ],
@@ -94,7 +92,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            'Food Logs for ${DateFormat('d MMM yyyy').format(provider.selectedDate)}',
+                            '${langProvider.translate('food_logs_for')} ${DateFormat('d MMM yyyy').format(provider.selectedDate)}',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
@@ -128,6 +126,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   }
 
   Widget _buildEmptyState() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -135,14 +134,14 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           Icon(Icons.restaurant, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'No food logs on this date',
+            langProvider.translate('no_food_logs'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap the camera button to add a meal!',
+            langProvider.translate('tap_camera'),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -151,6 +150,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   }
 
   Widget _buildDailyNutritionSummary(FoodLogProvider provider, User? user) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     double totalCarbs = 0;
     double totalFat = 0;
     double totalProtein = 0;
@@ -190,15 +190,15 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Total Nutrisi Hari Ini', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(langProvider.translate('today_nutrition'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNutritionCircle('Kalori', totalCalories, targetCalories, Colors.blue, 'kcal', isInt: true),
-              _buildNutritionCircle('Karbo', totalCarbs, targetCarbs, Colors.orange, 'g'),
-              _buildNutritionCircle('Lemak', totalFat, targetFat, Colors.yellow.shade700, 'g'),
-              _buildNutritionCircle('Protein', totalProtein, targetProtein, Colors.red.shade400, 'g'),
+              _buildNutritionCircle(langProvider.translate('calories'), totalCalories, targetCalories, Colors.blue, 'kcal', isInt: true),
+              _buildNutritionCircle(langProvider.translate('carbs'), totalCarbs, targetCarbs, Colors.orange, 'g'),
+              _buildNutritionCircle(langProvider.translate('fat'), totalFat, targetFat, Colors.yellow.shade700, 'g'),
+              _buildNutritionCircle(langProvider.translate('protein'), totalProtein, targetProtein, Colors.red.shade400, 'g'),
             ],
           ),
         ],
@@ -270,6 +270,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
 
   Widget _buildQuoteCard(FoodLogProvider provider) {
     if (provider.todayQuote == null) return const SizedBox.shrink();
+    final langProvider = Provider.of<LanguageProvider>(context);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -297,10 +298,10 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.format_quote, color: AppTheme.primary),
-                  SizedBox(width: 8),
-                  Text('Inspirasi Hari Ini', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                children: [
+                  const Icon(Icons.format_quote, color: AppTheme.primary),
+                  const SizedBox(width: 8),
+                  Text(langProvider.translate('today_inspiration'), style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -324,6 +325,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   }
 
   Widget _buildLogCard(FoodLog log) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -402,7 +404,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                     final questProvider = Provider.of<QuestProvider>(context, listen: false);
                                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
                                     final messenger = ScaffoldMessenger.of(context);
-
+ 
                                     final success = await provider.toggleShareLog(log);
                                     if (!mounted) return;
                                     if (success) {
@@ -417,7 +419,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                                           authProvider.init();
                                         }
                                       }
-
+ 
                                       messenger.showSnackBar(
                                         SnackBar(
                                           content: Text(log.isShared 
@@ -442,7 +444,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'ESTIMASI PER PORSI',
+                            langProvider.translate('estimate_serving'),
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade700, letterSpacing: 0.5),
                           ),
                           const SizedBox(height: 4),
@@ -526,6 +528,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
   }
 
   Widget _buildNutritionData(FoodLog log) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     final maxVal = [log.carbs ?? 0, log.fat ?? 0, log.protein ?? 0, 1.0].reduce((a, b) => a > b ? a : b);
     
     List<dynamic> items = [];
@@ -545,7 +548,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
       children: [
         if (items.isNotEmpty) ...[
           Text(
-            'KOMPOSISI BAHAN',
+            langProvider.translate('ingredient_composition'),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -585,9 +588,9 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCompactNutrientBadge('${itemCal.toStringAsFixed(0)} kcal', Colors.blue.shade700, Colors.blue.shade50),
-                        _buildCompactNutrientBadge('${itemCarbs.toStringAsFixed(1)}g Karbo', Colors.orange.shade700, Colors.orange.shade50),
-                        _buildCompactNutrientBadge('${itemFat.toStringAsFixed(1)}g Lemak', Colors.yellow.shade900, Colors.yellow.shade50),
-                        _buildCompactNutrientBadge('${itemProtein.toStringAsFixed(1)}g Prot', Colors.red.shade700, Colors.red.shade50),
+                        _buildCompactNutrientBadge('${itemCarbs.toStringAsFixed(1)}g ${langProvider.translate('carbs')}', Colors.orange.shade700, Colors.orange.shade50),
+                        _buildCompactNutrientBadge('${itemFat.toStringAsFixed(1)}g ${langProvider.translate('fat')}', Colors.yellow.shade900, Colors.yellow.shade50),
+                        _buildCompactNutrientBadge('${itemProtein.toStringAsFixed(1)}g ${langProvider.translate('protein').substring(0, 4)}', Colors.red.shade700, Colors.red.shade50),
                       ],
                     ),
                   ],
@@ -611,7 +614,7 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                items.isNotEmpty ? 'Total Nutrisi' : 'Total Energi', 
+                items.isNotEmpty ? langProvider.translate('total_nutrition_label') : langProvider.translate('total_energy_label'), 
                 style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900)
               ),
               Text('${log.calories?.toStringAsFixed(0)} kcal', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.blue.shade700, fontSize: 16)),
@@ -621,16 +624,17 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
         const SizedBox(height: 16),
         
         // Progress Bars
-        _buildNutrientRow('Karbohidrat', log.carbs ?? 0, maxVal, Colors.orange),
+        _buildNutrientRow(langProvider.translate('carbs'), log.carbs ?? 0, maxVal, Colors.orange),
         const SizedBox(height: 8),
-        _buildNutrientRow('Lemak', log.fat ?? 0, maxVal, Colors.yellow.shade700),
+        _buildNutrientRow(langProvider.translate('fat'), log.fat ?? 0, maxVal, Colors.yellow.shade700),
         const SizedBox(height: 8),
-        _buildNutrientRow('Protein', log.protein ?? 0, maxVal, Colors.red.shade400),
+        _buildNutrientRow(langProvider.translate('protein'), log.protein ?? 0, maxVal, Colors.red.shade400),
       ],
     );
   }
 
   Widget _buildNoNutritionData() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       alignment: Alignment.center,
@@ -639,12 +643,12 @@ class _FoodLogScreenState extends State<FoodLogScreen> {
           Icon(Icons.pending_actions, size: 32, color: Colors.grey.shade400),
           const SizedBox(height: 8),
           Text(
-            'Sedang Menganalisis Nutrisi...',
+            langProvider.translate('analyzing_nutrition'),
             style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
-            'Klik untuk edit manual atau melihat hasil',
+            langProvider.translate('click_edit_manual'),
             style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
           ),
         ],

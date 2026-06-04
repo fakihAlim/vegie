@@ -36,6 +36,12 @@ class ApiService {
       }
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    headers['X-Diet-Allow-Eggs'] = (prefs.getBool('diet_allow_eggs') ?? false).toString();
+    headers['X-Diet-Allow-Milk'] = (prefs.getBool('diet_allow_milk') ?? false).toString();
+    headers['X-Diet-Allow-Honey'] = (prefs.getBool('diet_allow_honey') ?? false).toString();
+    headers['X-Diet-Restrict-Alliums'] = (prefs.getBool('diet_restrict_alliums') ?? false).toString();
+
     return headers;
   }
 

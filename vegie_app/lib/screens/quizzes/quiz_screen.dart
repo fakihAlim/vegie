@@ -13,7 +13,7 @@ class QuizScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Kuis Harian', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: const Padding(
+      body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: DailyQuizCard(),
       ),

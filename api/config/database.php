@@ -35,6 +35,9 @@ class Database {
             if (!defined('GEMINI_API_KEY') && isset($env['GEMINI_API_KEY'])) {
                 define('GEMINI_API_KEY', $env['GEMINI_API_KEY']);
             }
+            if (!defined('AI_SECRET_KEY') && isset($env['AI_SECRET_KEY'])) {
+                define('AI_SECRET_KEY', $env['AI_SECRET_KEY']);
+            }
         }
 
         try {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../services/local_notification_service.dart';
+import '../../providers/language_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,6 +15,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isReminderEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0); // Default to 8:00 PM
+  bool _allowEggs = false;
+  bool _allowMilk = false;
+  bool _allowHoney = false;
+  bool _restrictAlliums = false;
 
   @override
   void initState() {
@@ -30,6 +36,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (hour != null && minute != null) {
         _reminderTime = TimeOfDay(hour: hour, minute: minute);
       }
+      _allowEggs = prefs.getBool('diet_allow_eggs') ?? false;
+      _allowMilk = prefs.getBool('diet_allow_milk') ?? false;
+      _allowHoney = prefs.getBool('diet_allow_honey') ?? false;
+      _restrictAlliums = prefs.getBool('diet_restrict_alliums') ?? false;
     });
   }
 
@@ -45,6 +55,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else {
       await LocalNotificationService.cancelReminder();
     }
+  }
+
+  /// Sets diet preference setting dynamically and saves to SharedPreferences
+  Future<void> _setDietSetting(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+    setState(() {
+      if (key == 'diet_allow_eggs') _allowEggs = value;
+      if (key == 'diet_allow_milk') _allowMilk = value;
+      if (key == 'diet_allow_honey') _allowHoney = value;
+      if (key == 'diet_restrict_alliums') _restrictAlliums = value;
+    });
   }
 
   /// Shows the Time Picker dialog to select reminder time
@@ -78,9 +100,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
       await _saveSettings();
       if (mounted) {
+        final langProvider = Provider.of<LanguageProvider>(context, listen: false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Pengingat harian dijadwalkan pada ${_reminderTime.format(context)} ⏰'),
+            content: Text('${langProvider.translate('reminder_scheduled')} ${_reminderTime.format(context)} ⏰'),
             backgroundColor: AppTheme.primary,
           ),
         );
@@ -90,10 +113,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Pengaturan', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(langProvider.translate('settings_title'), style: const TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: AppTheme.textPrimary,
@@ -134,13 +158,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Pengingat Harian',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      Text(
+                        langProvider.translate('reminder_title'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Bantu bangun kebiasaan mencatat food log agar diet plant-based kamu tetap terpantau.',
+                        langProvider.translate('reminder_desc'),
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12, height: 1.4),
                       ),
                     ],
@@ -170,14 +194,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SwitchListTile(
                   activeThumbColor: AppTheme.primary,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  title: const Text(
-                    'Aktifkan Pengingat',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  title: Text(
+                    langProvider.translate('enable_reminder'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                   ),
                   subtitle: Text(
                     _isReminderEnabled 
-                        ? 'Pengingat aktif setiap hari pada jam ${_reminderTime.format(context)}' 
-                        : 'Pengingat saat ini dinonaktifkan',
+                        ? '${langProvider.translate('reminder_active_at')} ${_reminderTime.format(context)}' 
+                        : langProvider.translate('reminder_disabled'),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                   value: _isReminderEnabled,
@@ -190,8 +214,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(value 
-                            ? 'Pengingat harian diaktifkan! ⏰' 
-                            : 'Pengingat harian dinonaktifkan'),
+                            ? langProvider.translate('reminder_enabled_snack')
+                            : langProvider.translate('reminder_disabled_snack')),
                         backgroundColor: value ? AppTheme.primary : AppTheme.error,
                       ),
                     );
@@ -203,12 +227,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // Time picker row
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  title: const Text(
-                    'Jam Pengingat',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  title: Text(
+                    langProvider.translate('reminder_time_label'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                   ),
                   subtitle: Text(
-                    'Pilih jam terbaik untuk menerima notifikasi',
+                    langProvider.translate('reminder_time_desc'),
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                   trailing: Container(
@@ -234,6 +258,176 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   onTap: _pickTime,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Language Settings Card
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        langProvider.translate('language_settings'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryDark),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        langProvider.translate('select_language'),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Colors.grey.shade100, height: 1, thickness: 1),
+                
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  title: Text(
+                    langProvider.translate('indonesian'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  trailing: langProvider.currentLanguage == 'id'
+                      ? const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 22)
+                      : Icon(Icons.radio_button_off_rounded, color: Colors.grey.shade300, size: 22),
+                  onTap: () => langProvider.changeLanguage('id'),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  title: Text(
+                    langProvider.translate('english'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  trailing: langProvider.currentLanguage == 'en'
+                      ? const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 22)
+                      : Icon(Icons.radio_button_off_rounded, color: Colors.grey.shade300, size: 22),
+                  onTap: () => langProvider.changeLanguage('en'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Diet Exceptions Card
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        langProvider.translate('diet_exceptions'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryDark),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        langProvider.translate('diet_exceptions_desc'),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Colors.grey.shade100, height: 1, thickness: 1),
+                
+                // Allow Eggs
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: Text(
+                    langProvider.translate('allow_eggs'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    langProvider.translate('allow_eggs_desc'),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowEggs,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_eggs', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Allow Milk
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: Text(
+                    langProvider.translate('allow_milk'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    langProvider.translate('allow_milk_desc'),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowMilk,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_milk', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Allow Honey
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: Text(
+                    langProvider.translate('allow_honey'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    langProvider.translate('allow_honey_desc'),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _allowHoney,
+                  onChanged: (bool val) => _setDietSetting('diet_allow_honey', val),
+                ),
+                Divider(color: Colors.grey.shade50, height: 1, thickness: 1),
+
+                // Restrict Alliums
+                SwitchListTile(
+                  activeThumbColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  title: Text(
+                    langProvider.translate('restrict_alliums'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
+                  ),
+                  subtitle: Text(
+                    langProvider.translate('restrict_alliums_desc'),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
+                  value: _restrictAlliums,
+                  onChanged: (bool val) => _setDietSetting('diet_restrict_alliums', val),
                 ),
               ],
             ),

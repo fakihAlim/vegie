@@ -189,12 +189,18 @@ class GamificationManager {
             "INSERT INTO user_activity_logs (user_id, action, extra_data) VALUES (?, 'badge_awarded', ?)"
         )->execute([$userId, json_encode(['badge_code' => $code, 'badge_name' => $badge['name']])]);
 
+        $lottieFile = $badge['lottie_file'] ?? 'assets/lottie/default.json';
+        if (strpos($lottieFile, 'uploads/') === 0) {
+            require_once __DIR__ . '/upload.php';
+            $lottieFile = getUploadUrl($lottieFile);
+        }
+
         return [
             'id'          => (int) $badge['id'],
             'code'        => $badge['code'],
             'name'        => $badge['name'],
             'description' => $badge['description'] ?? '',
-            'lottie_file' => $badge['lottie_file'] ?? 'assets/lottie/default.json',
+            'lottie_file' => $lottieFile,
             'is_unlocked' => true,
             'awarded_at'  => date('Y-m-d H:i:s'),
         ];

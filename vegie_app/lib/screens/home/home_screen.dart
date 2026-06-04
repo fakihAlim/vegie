@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../services/activity_log_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 
 // Import Screen Tabs
 import '../food_log/food_log_screen.dart';
@@ -54,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // 1. Ambil data user dari Provider
     final authProvider = Provider.of<AuthProvider>(context);
+    final langProvider = Provider.of<LanguageProvider>(context);
     final user = authProvider.user;
     
     // Feature Locking Check (diaplikasikan di tab Discover sekarang)
@@ -84,27 +86,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 index: 0,
                 icon: Icons.dashboard_outlined,
                 activeIcon: Icons.dashboard,
-                label: 'Dashboard',
+                label: langProvider.translate('nav_dashboard'),
               ),
               _buildTabItem(
                 index: 1,
                 icon: Icons.lightbulb_outline,
                 activeIcon: Icons.lightbulb,
-                label: 'Insights',
+                label: langProvider.translate('nav_insights'),
               ),
               _buildCameraTabItem(),
               _buildTabItem(
                 index: 2,
                 icon: isLocked ? Icons.lock_outline : Icons.explore_outlined,
                 activeIcon: isLocked ? Icons.lock : Icons.explore,
-                label: 'Discover',
+                label: langProvider.translate('nav_discover'),
                 iconColor: isLocked ? Colors.redAccent : null,
               ),
               _buildTabItem(
                 index: 3,
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Profile',
+                label: langProvider.translate('nav_profile'),
               ),
             ],
           ),
@@ -114,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCameraTabItem() {
+    final langProvider = Provider.of<LanguageProvider>(context);
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -124,16 +127,16 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(
+        children: [
+          const Icon(
             Icons.camera_alt_outlined,
             color: AppTheme.textSecondary,
             size: 24,
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
-            'Log',
-            style: TextStyle(
+            langProvider.translate('nav_log'),
+            style: const TextStyle(
               color: AppTheme.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.normal,

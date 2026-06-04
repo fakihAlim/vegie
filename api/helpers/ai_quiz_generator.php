@@ -3,32 +3,19 @@
  * AI Quiz Generator Helper
  * Vegie App API
  * 
- * Generates plant-based nutrition quiz questions using AI.
- * Priority: Ollama (local) → Gemini API (cloud fallback)
+ * Generates plant-based nutrition quiz questions using Google Gemini API.
  */
 
 // Load env config if exists (same pattern as nutrition_analyzer.php)
 $envPath = __DIR__ . '/../env.php';
 if (file_exists($envPath)) {
     $env = require $envPath;
-    if (!defined('OLLAMA_BASE_URL') && isset($env['OLLAMA_BASE_URL'])) {
-        define('OLLAMA_BASE_URL', $env['OLLAMA_BASE_URL']);
-    }
-    if (!defined('OLLAMA_MODEL') && isset($env['OLLAMA_MODEL'])) {
-        define('OLLAMA_MODEL', $env['OLLAMA_MODEL']);
-    }
     if (!defined('GEMINI_API_KEY') && isset($env['GEMINI_API_KEY'])) {
         define('GEMINI_API_KEY', $env['GEMINI_API_KEY']);
     }
 }
 
 // Default configuration — can be overridden by env.php
-if (!defined('OLLAMA_BASE_URL')) {
-    define('OLLAMA_BASE_URL', 'http://127.0.0.1:11434');
-}
-if (!defined('OLLAMA_MODEL')) {
-    define('OLLAMA_MODEL', 'jensonodigie/Jenteck-GPT');
-}
 if (!defined('GEMINI_API_KEY')) {
     define('GEMINI_API_KEY', '');
 }
@@ -47,67 +34,15 @@ function getQuizPrompt(): string {
 
 /**
  * Generate a plant-based quiz question using AI.
- * Priority: Ollama (local) → Gemini (cloud fallback).
+ * Powered by Google Gemini API.
  * 
  * @return array|null - Quiz data array or null on failure
  */
 function generatePlantBasedQuiz(): ?array {
     $prompt = getQuizPrompt();
 
-    // Try Ollama first (local AI)
-    $result = generateQuizWithOllama($prompt);
-    if ($result !== null) {
-        return $result;
-    }
-
-    // Fallback to Gemini (cloud AI)
-    $result = generateQuizWithGemini($prompt);
-    return $result;
-}
-
-/**
- * Generate quiz using Ollama (local AI) — Primary
- * 
- * @param string $prompt
- * @return array|null
- */
-function generateQuizWithOllama(string $prompt): ?array {
-    $endpoint = rtrim(OLLAMA_BASE_URL, '/') . '/api/generate';
-
-    $payload = json_encode([
-        'model'  => OLLAMA_MODEL,
-        'prompt' => $prompt,
-        'stream' => false,
-    ]);
-
-    $ch = curl_init($endpoint);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        CURLOPT_TIMEOUT        => 120,
-        CURLOPT_CONNECTTIMEOUT => 5,
-    ]);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-
-    if ($curlError || $httpCode !== 200) {
-        error_log("AI Quiz Generator - Ollama error: HTTP $httpCode, cURL: $curlError");
-        return null;
-    }
-
-    $data = json_decode($response, true);
-    $rawText = $data['response'] ?? '';
-
-    $parsed = parseQuizResponse($rawText);
-    if ($parsed !== null) {
-        $parsed['ai_provider'] = 'Ollama';
-    }
-    return $parsed;
+    // Generate using Gemini API (cloud AI)
+    return generateQuizWithGemini($prompt);
 }
 
 /**
@@ -117,12 +52,42 @@ function generateQuizWithOllama(string $prompt): ?array {
  * @return array|null
  */
 function generateQuizWithGemini(string $prompt): ?array {
-    if (empty(GEMINI_API_KEY)) {
-        error_log("AI Quiz Generator - Gemini API key not configured");
+    $startTime = microtime(true);
+    $apiKey = defined('GEMINI_API_KEY') && !empty(GEMINI_API_KEY) ? GEMINI_API_KEY : '';
+    
+    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/ai_key_manager.php';
+    
+    $db = Database::getInstance()->getConnection();
+
+    if (empty($apiKey)) {
+        // Fallback to active keys in database
+        $stmtKey = $db->query("SELECT api_key FROM ai_gemini_keys WHERE status = 'active' LIMIT 1");
+        $encryptedKey = $stmtKey->fetchColumn() ?: '';
+        $apiKey = AiKeyManager::decrypt($encryptedKey);
+    }
+
+    $maskedKey = AiKeyManager::maskKey($apiKey);
+
+    if (empty($apiKey)) {
+        $reason = "Gemini API key not configured";
+        error_log("AI Quiz Generator - " . $reason);
+
+        // Log failed attempt
+        try {
+            $stmtLog = $db->prepare("
+                INSERT INTO ai_usage_logs (model_used, status, fallback_reason)
+                VALUES ('gemini-3.1-flash-lite', 'failed', ?)
+            ");
+            $stmtLog->execute([$reason]);
+        } catch (Exception $e) {
+            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+        }
+
         return null;
     }
 
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . GEMINI_API_KEY;
+    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" . $apiKey;
 
     $payload = json_encode([
         'contents' => [
@@ -149,17 +114,58 @@ function generateQuizWithGemini(string $prompt): ?array {
     $curlError = curl_error($ch);
     curl_close($ch);
 
+    $endTime = microtime(true);
+    $responseTime = round($endTime - $startTime, 2);
+
     if ($curlError || $httpCode !== 200) {
-        error_log("AI Quiz Generator - Gemini error: HTTP $httpCode, cURL: $curlError, Response: " . substr($response, 0, 300));
+        $reason = "Gemini error: HTTP $httpCode, cURL: $curlError, Response: " . substr($response, 0, 300);
+        error_log("AI Quiz Generator - " . $reason);
+
+        // Log failed attempt
+        try {
+            $stmtLog = $db->prepare("
+                INSERT INTO ai_usage_logs (model_used, api_key_used, response_time, status, fallback_reason)
+                VALUES ('gemini-3.1-flash-lite', ?, ?, 'failed', ?)
+            ");
+            $stmtLog->execute([$maskedKey, $responseTime, $reason]);
+        } catch (Exception $e) {
+            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+        }
+
         return null;
     }
 
     $data = json_decode($response, true);
     $rawText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+    $tokensUsed = $data['usageMetadata']['totalTokenCount'] ?? 0;
 
     $parsed = parseQuizResponse($rawText);
     if ($parsed !== null) {
         $parsed['ai_provider'] = 'Gemini';
+
+        // Log success
+        try {
+            $stmtLog = $db->prepare("
+                INSERT INTO ai_usage_logs (model_used, api_key_used, tokens_used, response_time, status)
+                VALUES ('gemini-3.1-flash-lite', ?, ?, ?, 'success')
+            ");
+            $stmtLog->execute([$maskedKey, $tokensUsed, $responseTime]);
+        } catch (Exception $e) {
+            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+        }
+    } else {
+        $reason = "JSON parse failed. Raw: " . substr($rawText, 0, 300);
+
+        // Log failed attempt
+        try {
+            $stmtLog = $db->prepare("
+                INSERT INTO ai_usage_logs (model_used, api_key_used, response_time, status, fallback_reason)
+                VALUES ('gemini-3.1-flash-lite', ?, ?, 'failed', ?)
+            ");
+            $stmtLog->execute([$maskedKey, $responseTime, $reason]);
+        } catch (Exception $e) {
+            error_log("AI Quiz Generator - Log failed: " . $e->getMessage());
+        }
     }
     return $parsed;
 }

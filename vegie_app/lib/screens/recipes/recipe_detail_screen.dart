@@ -34,6 +34,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
     
     _loadExtraDetail();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final recipeProv = Provider.of<RecipeProvider>(context, listen: false);
+      if (recipeProv.recipesList.isEmpty) {
+        recipeProv.fetchRecipes(refresh: true);
+      }
+    });
   }
 
   Future<void> _loadExtraDetail() async {
@@ -476,6 +482,150 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           ),
                         ],
                       ),
+                    ),
+
+                    // Related Recipes Section
+                    Consumer<RecipeProvider>(
+                      builder: (context, recipeProv, _) {
+                        final relatedRecipes = recipeProv.recipesList
+                            .where((item) => item.id != _recipe.id)
+                            .take(3)
+                            .toList();
+
+                        if (relatedRecipes.isEmpty) {
+                          if (recipeProv.isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.only(top: 40),
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 32),
+                            const Text(
+                              'Resep Terkait Lainnya',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 210,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: relatedRecipes.length,
+                                itemBuilder: (context, index) {
+                                  final r = relatedRecipes[index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => RecipeDetailScreen(recipe: r),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 160,
+                                      margin: const EdgeInsets.only(right: 16, bottom: 8, top: 4, left: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.04),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                        border: Border.all(color: Colors.grey.shade100),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              width: double.infinity,
+                                              color: AppTheme.accentLight,
+                                              child: r.photo != null
+                                                  ? CachedNetworkImage(
+                                                      imageUrl: r.photo!,
+                                                      fit: BoxFit.cover,
+                                                      errorWidget: (c, u, e) => const Icon(
+                                                        Icons.restaurant,
+                                                        color: AppTheme.primary,
+                                                        size: 30,
+                                                      ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.restaurant,
+                                                      color: AppTheme.primary,
+                                                      size: 30,
+                                                    ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  r.title,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.local_fire_department, size: 12, color: Colors.orange),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      '${r.calories ?? 350} kcal',
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                        color: AppTheme.textSecondary,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const Spacer(),
+                                                    const Icon(Icons.access_time, size: 12, color: Colors.grey),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      '${r.prepTimeMinutes ?? 20}m',
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                        color: AppTheme.textSecondary,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
