@@ -1,4 +1,21 @@
 <?php
+// Only allow execution in development environment via CLI
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    die("Access denied: This script can only be run via CLI.\n");
+}
+
+$allowMigrations = false;
+$envFile = __DIR__ . '/env.php';
+if (file_exists($envFile)) {
+    $env = require $envFile;
+    $allowMigrations = $env['ALLOW_MIGRATIONS'] ?? false;
+}
+
+if (!$allowMigrations) {
+    die("Access denied: Migrations/Seeders are disabled. Enable 'ALLOW_MIGRATIONS' in env.php to run.\n");
+}
+
 require_once __DIR__ . '/config/database.php';
 
 $db = Database::getInstance()->getConnection();
